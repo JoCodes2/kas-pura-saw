@@ -22,14 +22,9 @@
                 </div>
             </div>
             <ul class="nav nav-primary">
-                <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
-                    <a href="{{ url('/') }}">
-                        <i class="fas fa-home"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ request()->is('user*') ? 'active' : '' }}">
-                    <a href="{{ url('/user') }}">
+
+                <li class="nav-item {{ request()->is('pengguna*') ? 'active' : '' }}">
+                    <a href="{{ url('/pengguna') }}">
                         <i class="fas fa-calendar-check"></i>
                         <p>Pengguna</p>
                     </a>
