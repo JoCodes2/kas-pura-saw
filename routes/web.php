@@ -5,7 +5,7 @@ use App\Http\Controllers\CMS\KegiatanController;
 use App\Http\Controllers\CMS\MasterController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+Route::get('/pengguna', function () {
     return view('Admin.pengguna');
 });
 
@@ -18,6 +18,10 @@ Route::get('/kas_masuk', function () {
 });
 Route::get('/kegiatan', function () {
     return view('Admin.kegiatan');
+});
+
+Route::get('/', function () {
+    return view('Ui.utama');
 });
 
 Route::prefix('saw')->group(function () {

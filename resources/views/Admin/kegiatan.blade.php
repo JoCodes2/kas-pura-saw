@@ -13,9 +13,9 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-end">
-                            <button class="btn btn-primary " id="myBtn">
+                            {{-- <button class="btn btn-primary " id="myBtn">
                                 <i class="fas fa-plus pr-2"></i>Tambah
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                     <div class="card-body">
