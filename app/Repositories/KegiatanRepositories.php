@@ -36,23 +36,7 @@ class KegiatanRepositories implements KegiatanInterfaces
         }
         return $this->success($data);
     }
-    // public function createData(KegiatanRequest $request)
-    // {
-    //     try {
-    //         $data = new $this->KegiatanModel;
-    //         $data->nama_pengaju = $request->input('nama_pengaju');
-    //         $data->no_hp = $request->input('no_hp');
-    //         $data->nama_kegiatan = $request->input('nama_kegiatan');
-    //         $data->tanggal_kegiatan = $request->input('tanggal_kegiatan');
-    //         $data->estimasi_biaya = $request->input('estimasi_biaya');
-    //         $data->file_proposal = $request->file('file_proposal');
-    //         $data->status_kegiatan = $request->input('status_kegiatan');
-    //         $data->save();
-    //         return $this->success($data);
-    //     } catch (\Throwable $th) {
-    //         return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
-    //     }
-    // }
+   
 
     public function createData(KegiatanRequest $request)
     {
@@ -92,24 +76,6 @@ class KegiatanRepositories implements KegiatanInterfaces
         }
     }
 
-
-    // public function updateData(KegiatanRequest $request, $id)
-    // {
-    //     try {
-    //         $data = $this->KegiatanModel::where('id', $id)->first();
-    //         $data->nama_pengaju = $request->input('nama_pengaju');
-    //         $data->no_hp = $request->input('no_hp');
-    //         $data->nama_kegiatan = $request->input('nama_kegiatan');
-    //         $data->tanggal_kegiatan = $request->input('tanggal_kegiatan');
-    //         $data->estimasi_biaya = $request->input('estimasi_biaya');
-    //         $data->file_proposal = $request->file('file_proposal');
-    //         $data->status_kegiatan = $request->input('status_kegiatan');
-    //         $data->save();
-    //         return $this->success($data);
-    //     } catch (\Throwable $th) {
-    //         return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
-    //     }
-    // }
 
     public function updateData(KegiatanRequest $request, $id)
     {

@@ -37,6 +37,7 @@ Route::prefix('saw')->group(function () {
         Route::get('/get/{id}', 'getDataById');
         Route::post('/update/{id}', 'updateData');
         Route::delete('/delete/{id}', 'deleteData');
+        Route::get('/master-kas', 'getAllKas');
     });
 
     Route::prefix('kegiatan')->controller(KegiatanController::class)->group(function () {

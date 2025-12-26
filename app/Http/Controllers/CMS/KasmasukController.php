@@ -18,6 +18,11 @@ class KasmasukController extends Controller
     {
         return $this->KasmasukRepo->getAllData();
     }
+
+    public function getAllKas()
+    {
+        return $this->KasmasukRepo->getAllKas();
+    }
     public function getDataById($id)
     {
         return $this->KasmasukRepo->getDataById($id);

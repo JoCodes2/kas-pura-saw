@@ -21,14 +21,40 @@ class KasmasukRepositories implements KasmasukInterfaces
     {
         $this->KasmasukModel = $KasmasukModel;
     }
+    // public function getAllData()
+    // {
+    //     $data = $this->KasmasukModel::all();
+    //     if (!$data) {
+    //         return $this->dataNotFound();
+    //     }
+    //     return $this->success($data);
+    // }
+
     public function getAllData()
     {
-        $data = $this->KasmasukModel::all();
-        if (!$data) {
+        $data = $this->KasmasukModel::with('kas')->get();
+
+        if ($data->isEmpty()) {
             return $this->dataNotFound();
         }
+
         return $this->success($data);
     }
+
+
+
+    public function getAllKas()
+    {
+        $data = MasterModel::select('id', 'nama_kas')->get();
+
+        if ($data->isEmpty()) {
+            return $this->dataNotFound();
+        }
+
+        return $this->success($data);
+    }
+
+
     public function getDataById($id)
     {
         $data = $this->KasmasukModel::find($id);

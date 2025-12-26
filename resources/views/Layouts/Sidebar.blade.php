@@ -34,6 +34,24 @@
                         <p>Pengguna</p>
                     </a>
                 </li>
+                <li class="nav-item {{ request()->is('master*') ? 'active' : '' }}">
+                    <a href="{{ url('/master') }}">
+                        <i class="fas fa-list"></i>
+                        <p>Master</p>
+                    </a>
+                </li>
+                <li class="nav-item {{ request()->is('kas_masuk*') ? 'active' : '' }}">
+                    <a href="{{ url('/kas_masuk') }}">
+                        <i class="fas fa-money-bill"></i>
+                        <p>Kas Masuk</p>
+                    </a>
+                </li>
+                <li class="nav-item {{ request()->is('kegiatan*') ? 'active' : '' }}">
+                    <a href="{{ url('/kegiatan') }}">
+                        <i class="fas fa-calendar-check"></i>
+                        <p>Kegiatan</p>
+                    </a>
+                </li>
 
             </ul>
         </div>

@@ -21,7 +21,7 @@ class KasmasukModel extends Model
         'updated_at'
     ];
 
-    public function master()
+    public function kas()
     {
         return $this->belongsTo(MasterModel::class, 'kas_id');
     }
