@@ -1,11 +1,11 @@
 @extends('Layouts.Base')
 @section('title')
-    Master
+    Kriteria
 @endsection
 @section('content')
     <div class="page-inner">
         <div class="page-header ">
-            <h4 class="page-title"><i class="fas fa-list-alt pr-2"></i>Daftar Master Kas</h4>
+            <h4 class="page-title"><i class="fas fa-list-alt pr-2"></i>Daftar Kriteria</h4>
         </div>
 
         <div class="row">
@@ -24,14 +24,14 @@
                                 <thead>
                                     <tr>
                                         <th>No</th>
-                                        <th>Nama Kas</th>
-                                        <th>Saldo</th>
+                                        <th>Nama Kriteria</th>
+                                        <th>Tipe</th>
+                                        <th>Bobot</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tBody"></tbody>
                             </table>
-
                         </div>
                     </div>
                 </div>
@@ -40,16 +40,16 @@
     </div>
 
     <div class="modal fade" id="upsertDataModal" tabindex="-1" aria-labelledby="upsertDataModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content shadow-sm">
 
                 {{-- Header --}}
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="upsertDataModalLabel">
-                        <i class="fas fa-briefcase mr-2"></i> Form Master
+                        <i class="fas fa-tasks mr-2"></i> Form Kriteria
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
                     </button>
                 </div>
 
@@ -59,22 +59,44 @@
                         @csrf
                         <input type="hidden" name="id" id="id">
 
-                        <div class="form-group">
-                            <label for="nama_kas" class="font-weight-bold">
-                                Nama Kas
-                            </label>
-                            <input type="text" class="form-control" name="nama_kas" id="nama_kas">
-                            <small id="nama_kas-error" class="text-danger"></small>
+                        <div class="row">
+                            {{-- Nama Kriteria --}}
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Nama Kriteria</label>
+                                    <input type="text" class="form-control" name="nama_kriteria" id="nama_kriteria"
+                                        placeholder="Contoh: Biaya, Jarak, Prioritas">
+                                    <small id="nama_kriteria-error" class="text-danger"></small>
+                                </div>
+                            </div>
+
+                            {{-- Tipe Kriteria --}}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Tipe Kriteria</label>
+                                    <select class="form-control" name="tipe" id="tipe">
+                                        <option value="">-- Pilih Tipe --</option>
+                                        <option value="benefit">Benefit</option>
+                                        <option value="cost">Cost</option>
+                                    </select>
+                                    <small id="tipe-error" class="text-danger"></small>
+                                </div>
+                            </div>
+
+                            {{-- Bobot --}}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Bobot</label>
+                                    <input type="number" class="form-control" name="bobot" id="bobot" step="0.01"
+                                        min="0" max="100" placeholder="Contoh: 25">
+                                    <small id="bobot-error" class="text-danger"></small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="saldo" class="font-weight-bold">
-                                Saldo
-                            </label>
-                            <input type="text" class="form-control" name="saldo" id="saldo" placeholder="10.000">
-                            <small id="saldo-error" class="text-danger"></small>
-                        </div>
+
                     </form>
                 </div>
+
 
                 {{-- Footer --}}
                 <div class="modal-footer">
@@ -96,7 +118,7 @@
 
             function getData() {
                 $.ajax({
-                    url: `/saw/master`,
+                    url: `/saw/kriteria`,
                     method: "GET",
                     dataType: "json",
                     success: function(response) {
@@ -107,10 +129,9 @@
                         $.each(response.data, function(index, item) {
                             tableBody += "<tr>";
                             tableBody += "<td>" + (index + 1) + "</td>";
-                            tableBody += "<td>" + item.nama_kas + "</td>";
-                            tableBody += "<td>" + item.saldo + "</td>";
-
-
+                            tableBody += "<td>" + item.nama_kriteria + "</td>";
+                            tableBody += "<td>" + item.tipe + "</td>";
+                            tableBody += "<td>" + item.bobot + "</td>";
 
                             tableBody += "<td class='text-center'>";
                             tableBody +=
@@ -151,7 +172,8 @@
 
                 let id = $('#id').val();
                 let formData = new FormData($('#upsertDataForm')[0]);
-                let url = id ? `/saw/master/update/${id}` : '/saw/master/create';
+
+                let url = id ? `/saw/kriteria/update/${id}` : '/saw/kriteria/create';
                 let method = id ? 'POST' : 'POST';
 
                 loadingAllert();
@@ -189,7 +211,7 @@
             $(document).on('click', '.edit-btn', function() {
                 let id = $(this).data('id');
                 $.ajax({
-                    url: `/saw/master/get/${id}`,
+                    url: `/saw/kriteria/get/${id}`,
                     method: "GET",
                     dataType: "json",
                     success: function(response) {
@@ -198,8 +220,10 @@
 
                         // Populate form fields with existing data
                         $('#id').val(response.data.id);
-                        $('#nama_kas').val(response.data.nama_kas);
-                        $('#saldo').val(response.data.saldo);
+                        $('#nama_kriteria').val(response.data.nama_kriteria);
+                        $('#tipe').val(response.data.tipe);
+                        $('#bobot').val(response.data.bobot);
+
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching data for edit:', error);
@@ -217,7 +241,7 @@
                 function deleteData() {
                     $.ajax({
                         type: 'DELETE',
-                        url: `/saw/master/delete/${id}`,
+                        url: `/saw/kriteria/delete/${id}`,
                         success: function(response) {
                             if (response.code === 200) {
                                 successAlert();
@@ -303,6 +327,11 @@
                     }
                 });
             }
+
+            $('#estimasi_biaya').on('keyup', function() {
+                let value = $(this).val();
+                $(this).val(formatRupiah(value));
+            });
 
             // reset modal
             $('#upsertDataModal').on('hidden.bs.modal', function() {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CMS\KasmasukController;
 use App\Http\Controllers\CMS\KegiatanController;
+use App\Http\Controllers\CMS\KriteriaController;
 use App\Http\Controllers\CMS\MasterController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,10 @@ Route::get('/kas_masuk', function () {
 });
 Route::get('/kegiatan', function () {
     return view('Admin.kegiatan');
+});
+
+Route::get('/kriteria', function () {
+    return view('Admin.kriteria');
 });
 
 Route::get('/', function () {
@@ -45,6 +50,14 @@ Route::prefix('saw')->group(function () {
     });
 
     Route::prefix('kegiatan')->controller(KegiatanController::class)->group(function () {
+        Route::get('/', 'getAllData');
+        Route::post('/create', 'createData');
+        Route::get('/get/{id}', 'getDataById');
+        Route::post('/update/{id}', 'updateData');
+        Route::delete('/delete/{id}', 'deleteData');
+    });
+
+    Route::prefix('kriteria')->controller(KriteriaController::class)->group(function () {
         Route::get('/', 'getAllData');
         Route::post('/create', 'createData');
         Route::get('/get/{id}', 'getDataById');
