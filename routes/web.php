@@ -24,6 +24,9 @@ Route::get('/kegiatan', function () {
 Route::get('/kriteria', function () {
     return view('Admin.kriteria');
 });
+Route::get('/normalisasi', function () {
+    return view('Admin.Normalilasi');
+});
 
 Route::get('/', function () {
     return view('Ui.utama');

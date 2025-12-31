@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('master_kas', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nama_kas');
-            $table->decimal('saldo')->default(0);
+            $table->decimal('saldo', 15, 2)->default(0);
+            $table->boolean('is_utama');
             $table->timestamps();
         });
     }

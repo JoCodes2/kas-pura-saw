@@ -14,6 +14,7 @@ class MasterModel extends Model
         'id',
         'nama_kas',
         'saldo',
+        'is_utama',
         'created_at',
         'updated_at'
     ];

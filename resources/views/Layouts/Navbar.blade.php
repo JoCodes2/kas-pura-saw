@@ -26,35 +26,6 @@
         <div class="container-fluid">
             <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
 
-                <li class="nav-item dropdown hidden-caret">
-                    <a class="nav-link dropdown-toggle" id="notifDropdown" href="#" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false" title="Pemberitahuan">
-
-                        <i class="fa fa-bell text-light fa-lg"></i>
-
-                        {{-- Badge untuk hitungan notif belum dibaca. Diisi oleh JavaScript --}}
-                        <span class="notification bg-danger" id="notifCountBadge">0</span>
-                    </a>
-
-                    <ul class="dropdown-menu dropdown-menu-right notification-menu animated fadeIn shadow-lg"
-                        aria-labelledby="notifDropdown" id="notificationDropdownMenu">
-
-                        <li>
-                            <div
-                                class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-                                <h6 class="mb-0 text-dark font-weight-bold">Pemberitahuan Terbaru</h6>
-                            </div>
-                        </li>
-
-                        {{-- Konten Notifikasi Terbaru (Akan diisi oleh JavaScript) --}}
-                        <div id="notifDropdownContent" class="dropdown-body"
-                            style="max-height: 350px; overflow-y: auto;">
-                            <div class="text-center p-3 text-muted small">
-                                <i class="fas fa-sync-alt fa-spin mr-1"></i> Memuat...
-                            </div>
-                        </div>
-                    </ul>
-                </li>
 
                 <li class="nav-item dropdown hidden-caret">
                     <a class="dropdown-toggle profile-pic" data-toggle="dropdown" href="#" aria-expanded="false">
