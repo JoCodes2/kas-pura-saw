@@ -29,12 +29,6 @@
                         <p>Pengguna</p>
                     </a>
                 </li>
-                <li class="nav-item {{ request()->is('kriteria*') ? 'active' : '' }}">
-                    <a href="{{ url('/kriteria') }}">
-                        <i class="fas fa-clipboard-check"></i>
-                        <p>Kriteria</p>
-                    </a>
-                </li>
                 <li class="nav-item {{ request()->is('master*') ? 'active' : '' }}">
                     <a href="{{ url('/master') }}">
                         <i class="fas fa-list"></i>
@@ -51,6 +45,12 @@
                     <a href="{{ url('/kegiatan') }}">
                         <i class="fas fa-calendar-check"></i>
                         <p>Kegiatan</p>
+                    </a>
+                </li>
+                 <li class="nav-item {{ request()->is('kriteria*') ? 'active' : '' }}">
+                    <a href="{{ url('/kriteria') }}">
+                        <i class="fas fa-clipboard-check"></i>
+                        <p>Kriteria Penilaian SAW</p>
                     </a>
                 </li>
 

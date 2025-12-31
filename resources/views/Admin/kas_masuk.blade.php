@@ -185,13 +185,9 @@
                             tableBody += "<td>" + item.sumber + "</td>";
                             tableBody += "<td>Rp " + Number(item.jumlah).toLocaleString(
                                 'id-ID') + "</td>";
-                            tableBody += "<td>" + item.keterangan + "</td>";
+                            tableBody += "<td>" + (item.keterangan ?? "-") + "</td>";
 
                             tableBody += "<td class='text-center'>";
-                            tableBody +=
-                                "<button type='button' class='btn btn-outline-primary btn-sm edit-btn' data-id='" +
-                                item.id +
-                                "'><i class='fas fa-edit'></i></button> ";
                             tableBody +=
                                 "<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='" +
                                 item.id +

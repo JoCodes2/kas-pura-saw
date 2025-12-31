@@ -40,6 +40,7 @@ class MasterRepositories implements MasterInterfaces
             $data = new $this->MasterModel;
             $data->nama_kas = $request->input('nama_kas');
             $data->saldo = $request->input('saldo');
+            $data->is_utama = $request->input('is_utama');
             $data->save();
             return $this->success($data);
         } catch (\Throwable $th) {
@@ -53,6 +54,7 @@ class MasterRepositories implements MasterInterfaces
             $data = $this->MasterModel::where('id', $id)->first();
             $data->nama_kas = $request->input('nama_kas');
             $data->saldo = $request->input('saldo');
+            $data->is_utama = $request->input('is_utama');
             $data->save();
             return $this->success($data);
         } catch (\Throwable $th) {

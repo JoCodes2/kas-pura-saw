@@ -12,6 +12,7 @@ use App\Models\JabatanModel;
 use App\Models\KasmasukModel;
 use App\Models\MasterModel;
 use App\Traits\HttpResponseTraits;
+use Illuminate\Support\Facades\DB;
 
 class KasmasukRepositories implements KasmasukInterfaces
 {
@@ -65,6 +66,7 @@ class KasmasukRepositories implements KasmasukInterfaces
     }
     public function createData(KasmasukRequest $request)
     {
+        DB::beginTransaction();
         try {
             $data = new $this->KasmasukModel;
             $data->kas_id = $request->input('kas_id');
@@ -73,8 +75,20 @@ class KasmasukRepositories implements KasmasukInterfaces
             $data->jumlah = $request->input('jumlah');
             $data->keterangan = $request->input('keterangan');
             $data->save();
+
+            $masterKas = MasterModel::find($request->input('kas_id'));
+
+            if (!$masterKas) {
+                throw new \Exception("Data Master Kas tidak ditemukan.");
+            }
+
+            $masterKas->saldo += $request->input('jumlah');
+            $masterKas->save();
+
+            DB::commit();
             return $this->success($data);
         } catch (\Throwable $th) {
+            DB::rollBack();
             return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
         }
     }
@@ -96,11 +110,27 @@ class KasmasukRepositories implements KasmasukInterfaces
     }
     public function deleteData($id)
     {
+        DB::beginTransaction();
         try {
             $data = $this->KasmasukModel::where('id', $id)->first();
+
+            if (!$data) {
+                throw new \Exception("Data Kas Masuk tidak ditemukan.");
+            }
+
+            $masterKas = MasterModel::find($data->kas_id);
+
+            if ($masterKas) {
+                $masterKas->saldo -= $data->jumlah;
+                $masterKas->save();
+            }
+
             $data->delete();
+
+            DB::commit();
             return $this->success($data);
         } catch (\Throwable $th) {
+            DB::rollBack();
             return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
         }
     }
