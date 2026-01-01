@@ -216,45 +216,91 @@
 
             getData();
 
-            $(document).on('click', '#simpanData', function(e) {
-                $('.text-danger').text('');
+            // $(document).on('click', '#simpanData', function(e) {
+            //     $('.text-danger').text('');
+            //     e.preventDefault();
+
+            //     let id = $('#id').val();
+            //     let formData = new FormData($('#upsertDataForm')[0]);
+
+            //     let jumlah = $('#jumlah').val().replace(/[^0-9]/g, '');
+            //     formData.set('jumlah', jumlah);
+            //     let url = id ? `/saw/kas-masuk/update/${id}` : '/saw/kas-masuk/create';
+            //     let method = id ? 'POST' : 'POST';
+
+            //     loadingAllert();
+
+            //     $.ajax({
+            //         type: method,
+            //         url: url,
+            //         data: formData,
+            //         contentType: false,
+            //         processData: false,
+            //         success: function(response) {
+            //             console.log(response);
+            //             Swal.close();
+            //             if (response.code === 422) {
+            //                 let errors = response.errors;
+            //                 $.each(errors, function(key, value) {
+            //                     $('#' + key + '-error').text(value[0]);
+            //                 });
+            //             } else if (response.code === 200) {
+            //                 successAlert();
+            //                 reloadBrowsers();
+            //             } else {
+            //                 errorAlert();
+            //             }
+            //         },
+            //         error: function(xhr, status, error) {
+            //             console.error(xhr.responseText);
+            //             Swal.close();
+            //             errorAlert();
+            //         }
+            //     });
+            // });
+
+             $(document).on('click', '#simpanData', function(e) {
                 e.preventDefault();
+                $('.text-danger').text('');
 
                 let id = $('#id').val();
                 let formData = new FormData($('#upsertDataForm')[0]);
 
                 let jumlah = $('#jumlah').val().replace(/[^0-9]/g, '');
                 formData.set('jumlah', jumlah);
+                // Logic tambahan untuk checkbox
+                formData.set('is_utama', $('#is_utama').is(':checked') ? 1 : 0);
+
                 let url = id ? `/saw/kas-masuk/update/${id}` : '/saw/kas-masuk/create';
-                let method = id ? 'POST' : 'POST';
 
                 loadingAllert();
 
                 $.ajax({
-                    type: method,
+                    type: 'POST',
                     url: url,
                     data: formData,
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        console.log(response);
                         Swal.close();
-                        if (response.code === 422) {
-                            let errors = response.errors;
+                        if (response.code === 200) {
+                            successAlert();
+                            $('#upsertDataModal').modal('hide');
+                            reloadBrowsers();
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.close();
+                        if (xhr.status === 422) {
+                            let response = xhr.responseJSON;
+                            let errors = response.data;
+
                             $.each(errors, function(key, value) {
                                 $('#' + key + '-error').text(value[0]);
                             });
-                        } else if (response.code === 200) {
-                            successAlert();
-                            reloadBrowsers();
                         } else {
                             errorAlert();
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error(xhr.responseText);
-                        Swal.close();
-                        errorAlert();
                     }
                 });
             });

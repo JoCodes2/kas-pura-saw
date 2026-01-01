@@ -11,4 +11,5 @@ interface KegiatanInterfaces
     public function createData(KegiatanRequest $request);
     public function updateData(KegiatanRequest $request, $id);
     public function deleteData($id);
+    public function updateStatus($id, $status);
 }

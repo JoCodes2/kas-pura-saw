@@ -34,4 +34,9 @@ class KegiatanController extends Controller
     {
         return $this->KegiatanRepo->deleteData($id);
     }
+
+    public function updateStatus($id, $status)
+    {
+        return $this->KegiatanRepo->updateStatus($id, $status);
+    }
 }

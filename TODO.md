@@ -1,0 +1,2 @@
+-   [ ] Tambahkan method updateStatus ke KegiatanController.php
+-   [ ] Test fungsi update status

@@ -255,46 +255,45 @@
 
         // Core AJAX Function
         $(document).on('click', '#simpanData', function(e) {
-            $('.text-danger').text('');
             e.preventDefault();
+            $('.text-danger').text('');
 
-            let id = $('#id').val();
             let formData = new FormData($('#upsertDataForm')[0]);
 
-            // Bersihkan format rupiah ke angka murni
             let estimasi_biaya = $('#estimasi_biaya').val().replace(/[^0-9]/g, '');
             formData.set('estimasi_biaya', estimasi_biaya);
-
-            let url = id ? `/saw/kegiatan/update/${id}` : '/saw/kegiatan/create';
-            let method = 'POST'; // Biasanya Laravel/Backend butuh POST untuk update dengan FormData
 
             loadingAllert();
 
             $.ajax({
-                type: method,
-                url: url,
+                type: 'POST',
+                url: '/saw/kegiatan/create',
                 data: formData,
                 contentType: false,
                 processData: false,
+
                 success: function(response) {
                     Swal.close();
-                    if (response.code === 422) {
-                        let errors = response.errors;
+                    successAlert();
+                    reloadBrowsers();
+                },
+
+                error: function(xhr) {
+                    Swal.close();
+
+                    // ✅ VALIDASI
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.data;
+
                         $.each(errors, function(key, value) {
                             $('#' + key + '-error').text(value[0]);
                         });
-                    } else if (response.code === 200) {
-                        successAlert();
-                        closeModal();
-                        reloadBrowsers();
-                    } else {
+                    }
+                    // ❌ ERROR LAIN
+                    else {
+                        console.error(xhr.responseText);
                         errorAlert();
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                    Swal.close();
-                    errorAlert();
                 }
             });
         });
