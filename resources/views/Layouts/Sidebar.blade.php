@@ -2,17 +2,6 @@
     <div class="sidebar-wrapper scrollbar scrollbar-inner">
         <div class="sidebar-content">
 
-            {{-- USER --}}
-            <div class="user">
-                <div class="avatar-sm float-left mr-2">
-                    <img src="{{ asset('assets/img/LOGO.JPEG') }}" alt="Logo"
-                         class="img-fluid" width="70" height="70">
-                </div>
-                <div class="info">
-                    <span class="fw-bold">Sistem Penilaian SAW</span>
-                </div>
-            </div>
-
             <ul class="nav nav-primary">
 
                 {{-- DASHBOARD --}}

@@ -1,7 +1,8 @@
 <div class="main-header">
     <div class="logo-header" data-background-color="blue">
 
-        <a href="/" class="logo d-flex align-items-center text-decoration-none">
+        <a href="/dashboard" class="logo d-flex align-items-center text-decoration-none">
+            <img src="{{ asset('assets/img/LOGO.jpeg') }}" class="img-fluid" width="50" height="50" alt="">
             <span class="text-white fw-bold fs-4">
                 KAS PURA
             </span>

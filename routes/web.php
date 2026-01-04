@@ -11,8 +11,8 @@ Route::get('/', function () {
     return view('Ui.utama');
 });
 
-Route::get('/pengguna', function () {
-    return view('Admin.pengguna');
+Route::get('/dashboard', function () {
+    return view('Admin.Dashboard');
 });
 
 Route::get('/master', function () {
@@ -34,6 +34,9 @@ Route::get('/normalisasi', function () {
 });
 Route::get('/keputusan', function () {
     return view('Admin.keputusan');
+});
+Route::get('/kas-keluar', function () {
+    return view('Admin.kas-out');
 });
 
 

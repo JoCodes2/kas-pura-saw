@@ -2,9 +2,20 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Pura Agung Wana Kertha Jagatnatha</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- SEO Meta Tags --}}
+    <title>@yield('title') | Kas Pura - Manajemen Kas & Pendukung Keputusan SAW</title>
+    <meta name="description" content="Aplikasi Kas Pura: Solusi manajemen kas masuk, kas keluar, dan sistem pendukung keputusan kegiatan menggunakan metode SAW.">
+    <meta name="keywords" content="Kas Pura, Manajemen Kas, Sistem Pendukung Keputusan, SAW, Kas Pura App">
+    <meta name="author" content="Kas Pura Team">
+    <meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+
+    {{-- Logo / Favicon --}}
+    <link rel="icon" href="{{ asset('assets/img/LOGO.jpeg') }}" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/LOGO.jpeg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -29,7 +40,7 @@
         <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
             <div class="flex items-center gap-2 md:gap-3">
                 <div class="bg-white p-1 rounded-lg shadow-sm border border-slate-100 flex-shrink-0">
-                    <img src="{{ asset('assets/img/LOGO.JPEG') }}" alt="Logo Pura"
+                    <img src="{{ asset('assets/img/LOGO.jpeg') }}" alt="Logo Pura"
                         class="h-8 w-8 md:h-10 md:w-10 object-contain">
                 </div>
                 <span class="font-bold text-sm sm:text-lg md:text-xl tracking-tight text-emerald-800 leading-tight">
