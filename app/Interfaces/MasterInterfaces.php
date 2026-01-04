@@ -11,4 +11,7 @@ interface MasterInterfaces
     public function createData(MasterRequest $request);
     public function updateData(MasterRequest $request, $id);
     public function deleteData($id);
+
+    public function getKasKeluar();
+    public function getAllKas();
 }

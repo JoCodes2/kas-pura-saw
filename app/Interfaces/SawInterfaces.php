@@ -8,4 +8,7 @@ interface SawInterfaces
     public function getAll();
     public function calculateSaw();
     public function saveBatchRanking($rankingData);
+    public function clearPenilaian();
+
+    public function hasilSaw();
 }

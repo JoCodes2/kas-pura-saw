@@ -129,20 +129,46 @@ class SawRepositories implements SawInterfaces
             $idsKegiatan = collect($rankingData)->pluck('id_kegiatan')->toArray();
 
             foreach ($rankingData as $item) {
-                $this->hasilSaw::updateOrCreate(
-                    ['id_kegiatan' => $item['id_kegiatan']],
-                    [
-                        'id' => Str::uuid(),
-                        'nilai_preferensi' => $item['skor_total'],
-                        'peringkat' => $item['ranking'],
-                        'tanggal_hitung' => now(),
-                    ]
-                );
+                $this->hasilSaw::create([
+                    'id' => (string) Str::uuid(),
+                    'id_kegiatan' => $item['id_kegiatan'],
+                    'nilai_preferensi' => $item['skor_total'],
+                    'peringkat' => $item['ranking'],
+                    'tanggal_hitung' => now(),
+                ]);
             }
 
             $this->nilaiModel::whereIn('id_kegiatan', $idsKegiatan)->delete();
 
             return true;
         });
+    }
+    public function clearPenilaian()
+    {
+        DB::beginTransaction();
+        try {
+            $kegiatanIds = DB::table('kegiatan')
+                ->where('status_kegiatan', 'diproses')
+                ->pluck('id');
+
+            if ($kegiatanIds->isNotEmpty()) {
+                $this->nilaiModel::whereIn('id_kegiatan', $kegiatanIds)->delete();
+            }
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function hasilSaw()
+    {
+        $data = $this->hasilSaw::with('kegiatan')->get();
+        if (!$data) {
+            return $this->dataNotFound();
+        }
+        return $this->success($data);
     }
 }

@@ -54,4 +54,17 @@ class SawController extends Controller
             return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
         }
     }
+    public function clearPenilaian()
+    {
+        try {
+            $data = $this->nilaiRepo->clearPenilaian();
+            return $this->delete($data);
+        } catch (\Throwable $th) {
+            return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
+        }
+    }
+    public function hasilSaw()
+    {
+        return $this->nilaiRepo->hasilSaw();
+    }
 }

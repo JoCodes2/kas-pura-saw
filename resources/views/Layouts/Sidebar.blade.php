@@ -1,56 +1,73 @@
 <div class="sidebar sidebar-style-2">
     <div class="sidebar-wrapper scrollbar scrollbar-inner">
         <div class="sidebar-content">
+
+            {{-- USER --}}
             <div class="user">
                 <div class="avatar-sm float-left mr-2">
-                    <img src="{{ asset('assets/img/LOGO.JPEG') }}" alt="Logo" class="img-fluid" width="70"
-                        height="70">
+                    <img src="{{ asset('assets/img/LOGO.JPEG') }}" alt="Logo"
+                         class="img-fluid" width="70" height="70">
                 </div>
                 <div class="info">
-                    <a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
-                        <span>
-                            {{-- @auth
-                                {{ auth()->user()->name }}
-                            @endauth
-                            @auth
-                                <span class="user-level">{{ auth()->user()->username }}</span>
-                            @endauth --}}
-
-                        </span>
-                    </a>
-                    <div class="clearfix"></div>
+                    <span class="fw-bold">Sistem Penilaian SAW</span>
                 </div>
             </div>
+
             <ul class="nav nav-primary">
 
-                <li class="nav-item {{ request()->is('pengguna*') ? 'active' : '' }}">
-                    <a href="{{ url('/pengguna') }}">
-                        <i class="fas fa-calendar-check"></i>
-                        <p>Pengguna</p>
+                {{-- DASHBOARD --}}
+                <li class="nav-item {{ request()->is('dashboard*') ? 'active' : '' }}">
+                    <a href="{{ url('/dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
                     </a>
                 </li>
+
+                {{-- MASTER DATA --}}
                 <li class="nav-item {{ request()->is('master*') ? 'active' : '' }}">
                     <a href="{{ url('/master') }}">
-                        <i class="fas fa-list"></i>
-                        <p>Master</p>
+                        <i class="fas fa-database"></i>
+                        <p>Master Data</p>
                     </a>
                 </li>
+
+                {{-- KAS MASUK --}}
                 <li class="nav-item {{ request()->is('kas_masuk*') ? 'active' : '' }}">
                     <a href="{{ url('/kas_masuk') }}">
-                        <i class="fas fa-money-bill"></i>
+                        <i class="fas fa-hand-holding-usd"></i>
                         <p>Kas Masuk</p>
                     </a>
                 </li>
+
+                {{-- KEGIATAN --}}
                 <li class="nav-item {{ request()->is('kegiatan*') ? 'active' : '' }}">
                     <a href="{{ url('/kegiatan') }}">
-                        <i class="fas fa-calendar-check"></i>
+                        <i class="fas fa-calendar-alt"></i>
                         <p>Kegiatan</p>
                     </a>
                 </li>
-                 <li class="nav-item {{ request()->is('kriteria*') ? 'active' : '' }}">
+
+                {{-- KRITERIA & NORMALISASI SAW --}}
+                <li class="nav-item {{ request()->is('kriteria*', 'normalisasi*') ? 'active' : '' }}">
                     <a href="{{ url('/kriteria') }}">
-                        <i class="fas fa-clipboard-check"></i>
+                        <i class="fas fa-balance-scale"></i>
                         <p>Kriteria Penilaian SAW</p>
+                    </a>
+                </li>
+
+                {{-- KEPUTUSAN SAW --}}
+                <li class="nav-item {{ request()->is('keputusan*') ? 'active' : '' }}">
+                    <a href="{{ url('/keputusan') }}">
+                        <i class="fas fa-gavel"></i>
+                        <p>Keputusan SAW</p>
+                    </a>
+                </li>
+
+                {{-- KAS KELUAR --}}
+                <li class="nav-item {{ request()->is('kas-keluar*') ? 'active' : '' }}">
+                    <a href="{{ url('/kas-keluar') }}">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <p>Kas Keluar</p>
                     </a>
                 </li>
 

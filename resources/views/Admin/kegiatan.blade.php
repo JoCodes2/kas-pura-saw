@@ -176,9 +176,6 @@
                         <select class="form-control" id="status_kegiatan_update">
                             <option value="menunggu">Menunggu</option>
                             <option value="diproses">Diproses</option>
-                            <option value="ditolak">Ditolak</option>
-                            <option value="ditunda">Ditunda</option>
-                            <option value="diadakan">Diadakan</option>
                         </select>
                     </div>
                 </div>

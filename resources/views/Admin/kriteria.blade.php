@@ -209,7 +209,7 @@
                 success: function(response) {
                     Swal.close();
                     if (response.code === 200) {
-                        successAlert(response.message);
+                        successAlert();
                         $('#upsertDataModal').modal('hide');
                         reloadBrowsers();
                     }
@@ -264,7 +264,7 @@
                     url: `/saw/kriteria/delete/${id}`,
                     success: function(response) {
                         if (response.code === 200) {
-                            successAlert('Kriteria berhasil dihapus');
+                            successAlert();
                             reloadBrowsers();
                         } else {
                             errorAlert();
@@ -275,8 +275,8 @@
         });
 
         // --- Helper functions untuk SweetAlert ---
-        function successAlert(msg) {
-            Swal.fire({ icon: 'success', title: 'Berhasil', text: msg, timer: 1500, showConfirmButton: false });
+        function successAlert() {
+            Swal.fire({ icon: 'success', title: 'Berhasil', timer: 1500, showConfirmButton: false });
         }
 
         function errorAlert(msg = 'Terjadi kesalahan!') {

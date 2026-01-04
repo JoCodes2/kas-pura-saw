@@ -34,4 +34,8 @@ class MasterController extends Controller
     {
         return $this->MasterRepo->deleteData($id);
     }
+    public function getKasOut()
+    {
+        return $this->MasterRepo->getKasKeluar();
+    }
 }
