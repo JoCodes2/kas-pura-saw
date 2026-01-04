@@ -13,9 +13,9 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-end">
-                            {{-- <button class="btn btn-primary " id="myBtn">
+                            <button class="btn btn-primary " id="myBtn">
                                 <i class="fas fa-plus pr-2"></i>Tambah
-                            </button> --}}
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -154,6 +154,45 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="updateStatusModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exchange-alt mr-2"></i> Update Status Kegiatan
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="status_id">
+
+                    <div class="form-group">
+                        <label class="font-weight-bold">Status Kegiatan</label>
+                        <select class="form-control" id="status_kegiatan_update">
+                            <option value="menunggu">Menunggu</option>
+                            <option value="diproses">Diproses</option>
+                            <option value="ditolak">Ditolak</option>
+                            <option value="ditunda">Ditunda</option>
+                            <option value="diadakan">Diadakan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary" id="updateStatusBtn">
+                        Simpan
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 @endsection
 @section('script')
     <script>
@@ -173,6 +212,33 @@
                 }
 
                 return 'Rp ' + rupiah;
+            }
+
+            function getStatusBadge(status) {
+                let badgeClass = '';
+                let statusText = status.charAt(0).toUpperCase() + status.slice(1);
+
+                switch (status) {
+                    case 'menunggu':
+                        badgeClass = 'badge-secondary';
+                        break;
+                    case 'diproses':
+                        badgeClass = 'badge-primary';
+                        break;
+                    case 'ditolak':
+                        badgeClass = 'badge-danger';
+                        break;
+                    case 'ditunda':
+                        badgeClass = 'badge-warning';
+                        break;
+                    case 'diadakan':
+                        badgeClass = 'badge-success';
+                        break;
+                    default:
+                        badgeClass = 'badge-secondary';
+                }
+
+                return `<span class="badge ${badgeClass}">${statusText}</span>`;
             }
 
             function getData() {
@@ -212,20 +278,31 @@
         </td>
     `;
                             }
-                            tableBody += "<td>" + item.status_kegiatan + "</td>";
+                            tableBody += "<td>" + getStatusBadge(item.status_kegiatan) +
+                            "</td>";
 
 
 
 
-                            tableBody += "<td class='text-center'>";
-                            tableBody +=
-                                "<button type='button' class='btn btn-outline-primary btn-sm edit-btn' data-id='" +
-                                item.id +
-                                "'><i class='fas fa-edit'></i></button> ";
-                            tableBody +=
-                                "<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='" +
-                                item.id +
-                                "'><i class='fas fa-trash'></i></button>";
+
+                            tableBody += `
+<td class="text-center">
+
+    <button
+        class="btn btn-sm btn-outline-primary update-status"
+        data-id="${item.id}"
+        data-status="${item.status_kegiatan}">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <button
+        class="btn btn-sm btn-outline-danger delete-confirm"
+        data-id="${item.id}">
+        <i class="fas fa-trash"></i>
+    </button>
+</td>
+`;
+
                             tableBody += "</td>";
 
                             tableBody += "</tr>";
@@ -250,79 +327,47 @@
 
             getData();
 
-            $(document).on('click', '#simpanData', function(e) {
-                $('.text-danger').text('');
-                e.preventDefault();
 
-                let id = $('#id').val();
-                let formData = new FormData($('#upsertDataForm')[0]);
 
-                let estimasi_biaya = $('#estimasi_biaya').val().replace(/[^0-9]/g, '');
-                formData.set('estimasi_biaya', estimasi_biaya);
-                let url = id ? `/saw/kegiatan/update/${id}` : '/saw/kegiatan/create';
-                let method = id ? 'POST' : 'POST';
+            // buka modal update status
+            $(document).on('click', '.update-status', function() {
+                let id = $(this).data('id');
+                let status = $(this).data('status');
+
+                $('#status_id').val(id);
+                $('#status_kegiatan_update').val(status);
+
+                $('#updateStatusModal').modal('show');
+            });
+
+            // simpan status
+            $(document).on('click', '#updateStatusBtn', function() {
+                let id = $('#status_id').val();
+                let status = $('#status_kegiatan_update').val();
 
                 loadingAllert();
 
                 $.ajax({
-                    type: method,
-                    url: url,
-                    data: formData,
-                    contentType: false,
-                    processData: false,
+                    type: 'POST',
+                    url: `/saw/kegiatan/update-status/${id}/${status}`,
                     success: function(response) {
-                        console.log(response);
                         Swal.close();
-                        if (response.code === 422) {
-                            let errors = response.errors;
-                            $.each(errors, function(key, value) {
-                                $('#' + key + '-error').text(value[0]);
-                            });
-                        } else if (response.code === 200) {
-                            successAlert();
+
+                        if (response.code === 200) {
+                            successAlert('Status berhasil diperbarui');
+                            $('#updateStatusModal').modal('hide');
                             reloadBrowsers();
                         } else {
                             errorAlert();
                         }
                     },
-                    error: function(xhr, status, error) {
-                        console.error(xhr.responseText);
+                    error: function(xhr) {
                         Swal.close();
+                        console.error(xhr.responseText);
                         errorAlert();
                     }
                 });
             });
-
-            // Edit data button click handler
-            $(document).on('click', '.edit-btn', function() {
-                let id = $(this).data('id');
-                $.ajax({
-                    url: `/saw/kegiatan/get/${id}`,
-                    method: "GET",
-                    dataType: "json",
-                    success: function(response) {
-                        console.log(response);
-                        $('#upsertDataModal').modal('show');
-
-                        // Populate form fields with existing data
-                        $('#id').val(response.data.id);
-                        $('#nama_pengaju').val(response.data.nama_pengaju);
-                        $('#no_hp').val(response.data.no_hp);
-                        $('#nama_kegiatan').val(response.data.nama_kegiatan);
-                        $('#tanggal_kegiatan').val(response.data.tanggal_kegiatan);
-                        $('#estimasi_biaya').val(formatRupiah(res.data.estimasi_biaya
-                            .toString()));
-
-                        $('#file_proposal').val(response.data.file_proposal);
-
-                        $('#status_kegiatan').val(response.data.status_kegiatan);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching data for edit:', error);
-                    }
-                });
-            });
-
 
 
             // Delete data button click handler
@@ -437,8 +482,59 @@
                 $('#upsertDataForm')[0].reset();
                 $('#id').val('');
                 $('#upsertDataModal').modal('show');
-                $('#imagePreview').html('');
-            })
+            });
+
+            // simpan data
+            $(document).on('click', '#simpanData', function(e) {
+                e.preventDefault();
+                $('.text-danger').text('');
+
+                let id = $('#id').val();
+                let formData = new FormData($('#upsertDataForm')[0]);
+
+                let estimasi_biaya = $('#estimasi_biaya').val().replace(/[^0-9]/g, '');
+                formData.set('estimasi_biaya', estimasi_biaya);
+
+                let url = id ? `/saw/kegiatan/update/${id}` : '/saw/kegiatan/create';
+
+                loadingAllert();
+
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        Swal.close();
+                        if (response.code === 200) {
+                            successAlert();
+                            $('#upsertDataModal').modal('hide');
+                            reloadBrowsers();
+                        } else if (response.code === 422) {
+                            let errors = response.errors;
+                            $.each(errors, function(key, value) {
+                                $('#' + key + '-error').text(value[0]);
+                            });
+                        } else {
+                            errorAlert();
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.close();
+                        if (xhr.status === 422) {
+                            let response = xhr.responseJSON;
+                            let errors = response.data;
+
+                            $.each(errors, function(key, value) {
+                                $('#' + key + '-error').text(value[0]);
+                            });
+                        } else {
+                            errorAlert();
+                        }
+                    }
+                });
+            });
 
         });
     </script>

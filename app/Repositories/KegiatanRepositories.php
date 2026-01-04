@@ -36,7 +36,7 @@ class KegiatanRepositories implements KegiatanInterfaces
         }
         return $this->success($data);
     }
-   
+
 
     public function createData(KegiatanRequest $request)
     {
@@ -122,17 +122,6 @@ class KegiatanRepositories implements KegiatanInterfaces
         }
     }
 
-    // public function deleteData($id)
-    // {
-    //     try {
-    //         $data = $this->KegiatanModel::where('id', $id)->first();
-    //         $data->delete();
-    //         return $this->success($data);
-    //     } catch (\Throwable $th) {
-    //         return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
-    //     }
-    // }
-
     public function deleteData($id)
     {
         try {
@@ -144,6 +133,32 @@ class KegiatanRepositories implements KegiatanInterfaces
             }
 
             $data->delete();
+
+            return $this->success($data);
+        } catch (\Throwable $th) {
+            return $this->error(
+                $th->getMessage(),
+                400,
+                $th,
+                class_basename($this),
+                __FUNCTION__
+            );
+        }
+    }
+
+    public function updateStatus($id, $status)
+    {
+        try {
+            $data = $this->KegiatanModel::findOrFail($id);
+
+            // Validasi status yang diperbolehkan
+            $allowedStatuses = ['menunggu', 'diproses', 'ditolak', 'ditunda', 'diadakan'];
+            if (!in_array($status, $allowedStatuses)) {
+                return $this->error('Status tidak valid', 400);
+            }
+
+            $data->status_kegiatan = $status;
+            $data->save();
 
             return $this->success($data);
         } catch (\Throwable $th) {

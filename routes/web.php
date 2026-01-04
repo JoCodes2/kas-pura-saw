@@ -59,6 +59,8 @@ Route::prefix('saw')->group(function () {
         Route::get('/get/{id}', 'getDataById');
         Route::post('/update/{id}', 'updateData');
         Route::delete('/delete/{id}', 'deleteData');
+
+        Route::post('/update-status/{id}/{status}', 'updateStatus');
     });
 
     Route::prefix('kriteria')->controller(KriteriaController::class)->group(function () {
