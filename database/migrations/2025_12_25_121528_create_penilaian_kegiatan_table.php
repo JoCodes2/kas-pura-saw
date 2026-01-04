@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('id_kegiatan')->constrained('kegiatan')->onDelete('cascade');
             $table->foreignUuid('id_kriteria')->constrained('kriteria')->onDelete('cascade');
-            $table->decimal('nilai', 8, 2);
+            $table->decimal('nilai', 15, 2);
             $table->timestamps();
         });
     }

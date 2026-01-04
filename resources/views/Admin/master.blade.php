@@ -238,7 +238,7 @@
                 });
             });
 
-            function successAlert(message = 'Berhasil!') {
+            function successAlert() {
                 Swal.fire({ title: 'Berhasil!', text: message, icon: 'success', showConfirmButton: false, timer: 1000 });
             }
 

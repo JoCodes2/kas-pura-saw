@@ -4,6 +4,7 @@ use App\Http\Controllers\CMS\KasmasukController;
 use App\Http\Controllers\CMS\KegiatanController;
 use App\Http\Controllers\CMS\KriteriaController;
 use App\Http\Controllers\CMS\MasterController;
+use App\Http\Controllers\CMS\SawController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/pengguna', function () {
@@ -66,5 +67,11 @@ Route::prefix('saw')->group(function () {
         Route::get('/get/{id}', 'getDataById');
         Route::post('/update/{id}', 'updateData');
         Route::delete('/delete/{id}', 'deleteData');
+    });
+    Route::prefix('nilai')->controller(SawController::class)->group(function () {
+        Route::get('/', 'getAllData');
+        Route::post('/create', 'batchStore');
+        Route::get('/data', 'getRankingResult');
+        Route::post('/simpan-hasil', 'simpanHasilSaw');
     });
 });
