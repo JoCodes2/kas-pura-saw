@@ -4,10 +4,50 @@
 @endsection
 @section('content')
     <div class="page-inner">
-        <div class="page-header ">
+        <div class="page-header">
             <h4 class="page-title"><i class="fas fa-list-alt pr-2"></i>Daftar Master Kas</h4>
         </div>
 
+        <div class="row">
+            <div class="col-sm-6 col-md-6">
+                <div class="card card-stats card-round shadow-sm border-left border-primary">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-icon">
+                                <div class="icon-big text-center icon-primary bubble-shadow-small">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                            </div>
+                            <div class="col col-stats ml-3 ml-sm-0">
+                                <div class="numbers">
+                                    <p class="card-category text-primary font-weight-bold">Saldo Kas Utama</p>
+                                    <h4 class="card-title" id="totalKasUtama">Rp 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6">
+                <div class="card card-stats card-round shadow-sm border-left border-success">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-icon">
+                                <div class="icon-big text-center icon-success bubble-shadow-small">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                            <div class="col col-stats ml-3 ml-sm-0">
+                                <div class="numbers">
+                                    <p class="card-category text-success font-weight-bold">Total Saldo Semua Kas</p>
+                                    <h4 class="card-title" id="totalSemuaKas">Rp 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
@@ -111,8 +151,20 @@
                         let tableBody = "";
                         hasMainCash = false;
 
+                        let saldoUtama = 0;
+                        let saldoTotalSemua = 0;
+
                         $.each(response.data, function(index, item) {
-                            if(item.is_utama == 1) hasMainCash = true;
+                            let currentSaldo = parseFloat(item.saldo);
+
+                            // Hitung Total Semua Kas
+                            saldoTotalSemua += currentSaldo;
+
+                            // Hitung Kas Utama
+                            if(item.is_utama == 1) {
+                                hasMainCash = true;
+                                saldoUtama += currentSaldo;
+                            }
 
                             let statusBadge = item.is_utama == 1
                                 ? '<span class="badge badge-success"><i class="fas fa-star mr-1"></i> Utama</span>'
@@ -121,13 +173,17 @@
                             tableBody += "<tr>";
                             tableBody += "<td>" + (index + 1) + "</td>";
                             tableBody += "<td>" + item.nama_kas + "</td>";
-                            tableBody += "<td>Rp " + parseInt(item.saldo).toLocaleString('id-ID') + "</td>";
+                            tableBody += "<td>Rp " + currentSaldo.toLocaleString('id-ID') + "</td>";
                             tableBody += "<td>" + statusBadge + "</td>";
                             tableBody += "<td class='text-center'>";
                             tableBody += `<button type='button' class='btn btn-outline-primary btn-sm edit-btn' data-id='${item.id}' data-isutama='${item.is_utama}'><i class='fas fa-edit'></i></button> `;
                             tableBody += `<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='${item.id}'><i class='fas fa-trash'></i></button>`;
                             tableBody += "</td></tr>";
                         });
+
+                        // Tampilkan Hasil Perhitungan ke Widget
+                        $('#totalKasUtama').text("Rp " + saldoUtama.toLocaleString('id-ID'));
+                        $('#totalSemuaKas').text("Rp " + saldoTotalSemua.toLocaleString('id-ID'));
 
                         $("#loadData tbody").html(tableBody);
 
@@ -238,8 +294,8 @@
                 });
             });
 
-            function successAlert(message = 'Berhasil!') {
-                Swal.fire({ title: 'Berhasil!', text: message, icon: 'success', showConfirmButton: false, timer: 1000 });
+            function successAlert() {
+                Swal.fire({ title: 'Berhasil!', icon: 'success', showConfirmButton: false, timer: 1000 });
             }
 
             function errorAlert() {
@@ -250,7 +306,6 @@
                 Swal.fire({
                     title: 'Konfirmasi!',
                     html: message,
-                    icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Ya',
                     cancelButtonText: 'Tidak',

@@ -7,6 +7,8 @@ use App\Http\Requests\MasterRequest;
 use App\Interfaces\JabatanInterfaces;
 use App\Interfaces\MasterInterfaces;
 use App\Models\JabatanModel;
+use App\Models\KasKeluar;
+use App\Models\KasmasukModel;
 use App\Models\MasterModel;
 use App\Traits\HttpResponseTraits;
 
@@ -14,9 +16,13 @@ class MasterRepositories implements MasterInterfaces
 {
     use HttpResponseTraits;
     protected $MasterModel;
-    public function __construct(MasterModel $MasterModel)
+    protected $kasOut;
+    protected $kasIn;
+    public function __construct(MasterModel $MasterModel, KasmasukModel $kasIn, KasKeluar $kasOut)
     {
         $this->MasterModel = $MasterModel;
+        $this->kasOut = $kasOut;
+        $this->kasIn = $kasIn;
     }
     public function getAllData()
     {
@@ -71,4 +77,15 @@ class MasterRepositories implements MasterInterfaces
             return $this->error($th->getMessage(), 400, $th, class_basename($this), __FUNCTION__);
         }
     }
+
+
+    public function getKasKeluar()
+    {
+        $data = $this->kasOut::with(['kas', 'kegiatan'])->get();
+        if (!$data) {
+            return $this->dataNotFound();
+        }
+        return $this->success($data);
+    }
+    public function getAllKas() {}
 }

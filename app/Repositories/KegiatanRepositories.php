@@ -9,6 +9,7 @@ use App\Interfaces\KegiatanInterfaces;
 
 use App\Models\KegiatanModel;
 use App\Traits\HttpResponseTraits;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -148,20 +149,44 @@ class KegiatanRepositories implements KegiatanInterfaces
 
     public function updateStatus($id, $status)
     {
+        DB::beginTransaction();
         try {
             $data = $this->KegiatanModel::findOrFail($id);
-
-            // Validasi status yang diperbolehkan
             $allowedStatuses = ['menunggu', 'diproses', 'ditolak', 'ditunda', 'diadakan'];
             if (!in_array($status, $allowedStatuses)) {
                 return $this->error('Status tidak valid', 400);
             }
 
+            $oldStatus = $data->status_kegiatan;
+
             $data->status_kegiatan = $status;
             $data->save();
 
+            if ($status === 'diadakan' && $oldStatus !== 'diadakan') {
+                $kasUtama = DB::table('master_kas')->where('is_utama', 1)->first();
+
+                if (!$kasUtama) {
+                    throw new \Exception("Kas Utama tidak ditemukan. Harap atur master kas terlebih dahulu.");
+                }
+
+                DB::table('kas_keluar')->insert([
+                    'id' => Str::uuid(),
+                    'id_kas' => $kasUtama->id,
+                    'id_kegiatan' => $data->id,
+                    'tanggal' => now(),
+                    'jumlah' => $data->estimasi_biaya,
+                    'keterangan' => "Pengeluaran otomatis untuk kegiatan: " . $data->nama_kegiatan,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('master_kas')->where('id', $kasUtama->id)->decrement('saldo', $data->estimasi_biaya);
+            }
+
+            DB::commit();
             return $this->success($data);
         } catch (\Throwable $th) {
+            DB::rollBack();
             return $this->error(
                 $th->getMessage(),
                 400,

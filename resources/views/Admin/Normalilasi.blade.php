@@ -25,34 +25,33 @@
                                     <input type="hidden" id="val_saldo_utama" value="0">
                                 </div>
                             </div>
-                            <div class="col text-right">
-                                <span class="badge badge-info">Sinkronisasi Otomatis</span>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
+                {{-- CARD 1: MATRIKS PENILAIAN --}}
+                <div class="card card-round shadow-sm">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h4 class="card-title">Matriks Penilaian</h4>
-                                <p class="card-category">Berikan penilaian skor (0-100%) untuk kriteria kualitatif.</p>
+                                <p class="card-category" id="status-teks">Berikan penilaian skor (1-100) untuk kriteria kualitatif.</p>
                             </div>
-                            <button type="button" class="btn btn-success btn-round" id="btnSimpanSemua">
-                                <i class="fas fa-save pr-2"></i>Simpan Semua Penilaian
-                            </button>
+                            <div id="wrapper-tombol">
+                                <button type="button" class="btn btn-success btn-round" id="btnSimpanSemua">
+                                    <i class="fas fa-save pr-2"></i>Simpan Penilaian
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <form id="formPenilaian">
                                 @csrf
-                                <table class="table table-bordered table-head-bg-primary table-hover">
+                                <table class="table table-bordered table-head-bg-primary table-hover" id="tablePenilaian">
                                     <thead>
                                         <tr id="headerKriteria">
                                             <th style="min-width: 250px; vertical-align: middle;">Nama Kegiatan</th>
-                                            {{-- Header Kriteria via JS --}}
                                         </tr>
                                     </thead>
                                     <tbody id="bodyPenilaian">
@@ -60,6 +59,35 @@
                                     </tbody>
                                 </table>
                             </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- CARD 2: HASIL PERANKINGAN --}}
+                <div id="containerHasilRanking" style="display: none;">
+                    <div class="card shadow-lg border-primary mt-4 card-round">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="card-title text-white"><i class="fas fa-trophy pr-2"></i>Hasil Perankingan SAW</h4>
+                                <button id="btnSimpanHasil" class="btn btn-light btn-sm text-primary font-weight-bold btn-round">
+                                    <i class="fas fa-archive pr-1"></i> Simpan Hasil
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped">
+                                    <thead>
+                                        <tr class="text-center">
+                                            <th width="100">Ranking</th>
+                                            <th class="text-left">Nama Kegiatan</th>
+                                            <th width="200">Total Skor Preferensi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bodyRanking">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -75,184 +103,656 @@
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
         });
 
-        // 1. Fetch Data
+        const loadingAlert = () => Swal.fire({
+            title: 'Memproses...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        function reloadBrowsers() {
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        }
+
+        const simpleAlert = (title, icon) => Swal.fire({
+            title: title,
+            icon: icon,
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
+        });
+
+        const confirmAlert = (title, text) => Swal.fire({
+            title: title,
+            text: text,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya',
+            cancelButtonText: 'Batal'
+        });
+
+        let kriteriaList = [];
+        let kegiatanList = [];
+        let nilaiTersimpan = [];
+        let hasValidationError = false;
+
         function loadMatriks() {
-            loadingAlert('Menghubungkan Database...');
+            loadingAlert();
 
-            const getKriteria = $.ajax({ url: '/saw/kriteria', method: 'GET' });
-            const getKegiatan = $.ajax({ url: '/saw/kegiatan', method: 'GET' });
-            const getKas      = $.ajax({ url: '/saw/master', method: 'GET' });
-
-            $.when(getKriteria, getKegiatan, getKas).done(function(resKriteria, resKegiatan, resKas) {
+            Promise.all([
+                $.ajax({ url: '/saw/kriteria', method: 'GET' }),
+                $.ajax({ url: '/saw/kegiatan', method: 'GET' }),
+                $.ajax({ url: '/saw/master', method: 'GET' }),
+                $.ajax({ url: '/saw/nilai/', method: 'GET' })
+            ])
+            .then(function([resKriteria, resKegiatan, resKas, resNilai]) {
                 Swal.close();
 
-                let kriteriaList = resKriteria[0].data;
-                let kegiatanList = resKegiatan[0].data.filter(k => k.status_kegiatan === 'diproses');
-                let kasUtama = resKas[0].data.find(k => k.is_utama == 1);
+                kriteriaList = resKriteria.data || resKriteria[0]?.data || [];
+                kegiatanList = (resKegiatan.data || resKegiatan[0]?.data || []).filter(k => k.status_kegiatan === 'diproses');
+                let kasUtama = (resKas.data || resKas[0]?.data || []).find(k => k.is_utama == 1);
                 let saldo = kasUtama ? parseFloat(kasUtama.saldo) : 0;
+
+                // Coba berbagai struktur data
+                let nilaiData = null;
+                if (resNilai && resNilai.data) {
+                    nilaiData = resNilai.data;
+                } else if (resNilai && Array.isArray(resNilai)) {
+                    nilaiData = resNilai;
+                } else if (resNilai && resNilai[0] && resNilai[0].data) {
+                    nilaiData = resNilai[0].data;
+                } else {
+                    nilaiData = [];
+                }
 
                 $('#display_saldo_utama').text('Rp ' + new Intl.NumberFormat('id-ID').format(saldo));
                 $('#val_saldo_utama').val(saldo);
+                renderTable(kriteriaList, kegiatanList, saldo, nilaiData);
 
-                renderTable(kriteriaList, kegiatanList, saldo);
-            }).fail(function(){
-                Swal.fire('Error', 'Gagal sinkronisasi data.', 'error');
+            })
+            .catch(function(error) {
+                simpleAlert('Gagal memuat data', 'error');
             });
         }
 
-        // 2. Render Table
-        function renderTable(kriterias, kegiatans, saldoUtama) {
-            // Header
-            let headerHtml = '<th style="background: #f4f4f4; vertical-align: middle;">Nama Kegiatan</th>';
+        function renderTable(kriterias, kegiatans, saldoUtama, nilaiTersimpanData) {
+            // Pastikan nilaiTersimpan adalah array
+            if (Array.isArray(nilaiTersimpanData)) {
+                nilaiTersimpan = nilaiTersimpanData;
+            } else if (nilaiTersimpanData && Array.isArray(nilaiTersimpanData.data)) {
+                nilaiTersimpan = nilaiTersimpanData.data;
+            } else if (nilaiTersimpanData && typeof nilaiTersimpanData === 'object') {
+                nilaiTersimpan = Object.values(nilaiTersimpanData);
+            } else {
+                nilaiTersimpan = [];
+            }
+
+            // Tentukan mode saat ini
+            const isSimpanMode = $('#tablePenilaian').hasClass('table-simpan');
+
+            // Render header
+            let headerHtml = '<th style="background: #f8f9fa; vertical-align: middle;">Nama Kegiatan</th>';
             $.each(kriterias, function(i, k) {
+                let badgeClass = k.tipe == 'benefit' ? 'badge-success' : 'badge-warning';
+
                 headerHtml += `
-                    <th class="text-center" style="min-width: 150px">
-                        ${k.nama_kriteria}<br>
-                        <span class="badge ${k.tipe == 'benefit' ? 'badge-success' : 'badge-warning'}" style="font-size: 10px;">
-                            ${k.tipe.toUpperCase()}
-                        </span>
-                        <div class="mt-1 small text-white-50">Bobot: ${k.bobot}%</div>
+                    <th class="text-center" style="background: #f8f9fa; min-width: 120px;">
+                        <div class="small font-weight-bold">${k.nama_kriteria}</div>
+                        <div><span class="badge ${badgeClass}" style="font-size: 9px;">${k.tipe.toUpperCase()}</span></div>
                     </th>`;
             });
             $("#headerKriteria").html(headerHtml);
 
-            // Body
+            // Render body
             let bodyHtml = "";
             if(kegiatans.length === 0) {
-                bodyHtml = `<tr><td colspan="${kriterias.length + 1}" class="text-center py-5 text-muted">Tidak ada kegiatan 'Diproses' yang tersedia.</td></tr>`;
+                bodyHtml = `<tr><td colspan="${kriterias.length + 1}" class="text-center py-5 text-muted">Tidak ada kegiatan 'Diproses'.</td></tr>`;
             } else {
                 $.each(kegiatans, function(i, keg) {
-                    bodyHtml += `<tr><td class="font-weight-bold text-primary">${keg.nama_kegiatan}</td>`;
+                    bodyHtml += `<tr data-kegiatan="${keg.id}"><td class="font-weight-bold" style="vertical-align: middle;">${keg.nama_kegiatan}</td>`;
 
                     $.each(kriterias, function(j, kri) {
-                        let inputHtml = "";
+                        // Cari nilai yang tersimpan
+                        let valExist = null;
+                        let currentVal = "";
+
+                        try {
+                            if (Array.isArray(nilaiTersimpan)) {
+                                valExist = nilaiTersimpan.find(n => {
+                                    if (!n) return false;
+                                    return n.id_kegiatan == keg.id && n.id_kriteria == kri.id;
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error finding nilai:', error);
+                        }
+
+                        currentVal = valExist && valExist.nilai != null ? valExist.nilai : "";
                         let nama = kri.nama_kriteria.toLowerCase();
+                        let isAuto = nama.includes('biaya') || nama.includes('dana') || nama.includes('ketersediaan');
+                        let inputHtml = "";
 
-                        // KRITERIA: BIAYA (Cost - Otomatis)
                         if (nama.includes('biaya')) {
+                            let biaya = Math.round(keg.estimasi_biaya || 0);
                             inputHtml = `
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
-                                    <input type="number" name="nilai[${keg.id}][${kri.id}]"
-                                        class="form-control bg-light" value="${Math.round(keg.estimasi_biaya)}" readonly>
-                                </div>
-                                <small class="text-muted">Nilai Riil</small>`;
-                        }
-                        // KRITERIA: DANA (Benefit - Otomatis %)
-                        else if (nama.includes('dana') || nama.includes('ketersediaan')) {
-                            let skorDana = (saldoUtama / keg.estimasi_biaya) * 100;
-                            if (skorDana > 100) skorDana = 100;
-                            if (saldoUtama <= 0) skorDana = 0;
-
+                                <div class="text-center" style="vertical-align: middle;">
+                                    <div class="text-dark small font-weight-bold">Rp ${new Intl.NumberFormat('id-ID').format(biaya)}</div>
+                                    <input type="hidden" class="biaya-input" value="${biaya}">
+                                </div>`;
+                        } else if (nama.includes('dana') || nama.includes('ketersediaan')) {
+                            let biayaEstimasi = keg.estimasi_biaya || 1;
+                            let skorDana = saldoUtama > 0 ? Math.min((saldoUtama / biayaEstimasi) * 100, 100) : 0;
+                            let badgeClass = kri.tipe == 'benefit' ? 'badge-success' : 'badge-warning';
                             inputHtml = `
-                                <div class="input-group input-group-sm">
-                                    <input type="number" name="nilai[${keg.id}][${kri.id}]"
-                                        class="form-control bg-light text-success font-weight-bold"
-                                        value="${skorDana.toFixed(0)}" readonly>
-                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
-                                </div>
-                                <small class="text-info font-italic">Skor Kas</small>`;
+                                <div class="text-center" style="vertical-align: middle;">
+                                    <span class="badge ${badgeClass} px-2 py-1 small" style="font-size: 11px;">${skorDana.toFixed(0)}</span>
+                                    <input type="hidden" class="dana-input" value="${skorDana.toFixed(0)}">
+                                </div>`;
+                        } else {
+                            // Kriteria kualitatif
+                            if (isSimpanMode) {
+                                // Mode display (sudah disimpan)
+                                inputHtml = `
+                                    <div class="text-center" style="vertical-align: middle;">
+                                        <span class="badge badge-info px-2 py-1 display-nilai small">${currentVal || 0}</span>
+                                        <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${currentVal || ''}">
+                                    </div>`;
+                            } else {
+                                // Mode input - tanpa feedback visual awal
+                                inputHtml = `
+                                    <div class="text-center px-1" style="position: relative;">
+                                        <input type="number"
+                                            name="nilai[${keg.id}][${kri.id}]"
+                                            class="form-control input-nilai text-center"
+                                            value="${currentVal}"
+                                            min="1"
+                                            max="100"
+                                            placeholder="0"
+                                            style="height: 35px; font-size: 13px; padding: 5px; width: 70px; margin: 0 auto;"
+                                            data-kegiatan="${keg.id}"
+                                            data-kriteria="${kri.id}">
+                                        <div class="invalid-feedback d-block text-center small mt-1" style="font-size: 10px; display: none;">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>Wajib diisi
+                                        </div>
+                                    </div>`;
+                            }
                         }
-                        // KRITERIA: PESERTA (Benefit - Riil)
-                        else if (nama.includes('peserta')) {
-                            inputHtml = `
-                                <div class="input-group input-group-sm">
-                                    <input type="number" name="nilai[${keg.id}][${kri.id}]"
-                                        class="form-control border-primary" placeholder="Orang" required>
-                                </div>
-                                <small class="text-muted">Jml Peserta</small>`;
-                        }
-                        // KRITERIA: URGENSI & ADAT (Benefit - Manual 0-100%)
-                        else {
-                            inputHtml = `
-                                <div class="input-group input-group-sm">
-                                    <input type="number" name="nilai[${keg.id}][${kri.id}]"
-                                        class="form-control input-skala border-primary"
-                                        placeholder="0-100" min="0" max="100" required>
-                                    <div class="input-group-append"><span class="input-group-text">%</span></div>
-                                </div>
-                                <small class="text-muted">Input Skor</small>`;
-                        }
-                        bodyHtml += `<td>${inputHtml}</td>`;
+                        bodyHtml += `<td style="vertical-align: middle;">${inputHtml}</td>`;
                     });
                     bodyHtml += `</tr>`;
                 });
             }
+
             $("#bodyPenilaian").html(bodyHtml);
+
+            // Check status setelah render
+            checkStatusPenilaian();
         }
 
-        // 3. Validasi Input Maksimal 100%
-        $(document).on('keyup input', '.input-skala', function() {
-            let val = parseFloat($(this).val());
-            if (val > 100) {
-                $(this).val(100);
-                toastAlert('Maksimal nilai skor adalah 100%');
-            } else if (val < 0) {
-                $(this).val(0);
+        function checkStatusPenilaian() {
+            // Hitung jumlah kriteria kualitatif
+            let kualitatifKriteria = kriteriaList.filter(k => {
+                let nama = k.nama_kriteria.toLowerCase();
+                return !(nama.includes('biaya') || nama.includes('dana') || nama.includes('ketersediaan'));
+            });
+
+            let totalNeeded = kegiatanList.length * kualitatifKriteria.length;
+            let totalSaved = 0;
+
+            // Hitung nilai yang sudah tersimpan untuk kriteria kualitatif saja
+            $.each(kegiatanList, function(i, keg) {
+                $.each(kualitatifKriteria, function(j, kri) {
+                    try {
+                        if (Array.isArray(nilaiTersimpan)) {
+                            let valExist = nilaiTersimpan.find(n => {
+                                if (!n) return false;
+                                return n.id_kegiatan == keg.id && n.id_kriteria == kri.id;
+                            });
+
+                            if (valExist && valExist.nilai !== "" && valExist.nilai !== null && valExist.nilai >= 1) {
+                                totalSaved++;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error checking status:', error);
+                    }
+                });
+            });
+
+            if (totalNeeded > 0 && totalSaved >= totalNeeded && !$('#tablePenilaian').hasClass('table-simpan')) {
+                // Pindah ke mode simpan jika semua sudah diisi dan belum dalam mode simpan
+                showModeSimpan();
+            } else if (totalNeeded > 0 && totalSaved < totalNeeded && $('#tablePenilaian').hasClass('table-simpan')) {
+                // Kembali ke mode input jika belum lengkap tapi dalam mode simpan
+                showModeInput();
+            }
+        }
+
+        function showModeSimpan() {
+            // Update tombol
+            $('#wrapper-tombol').html(`
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-warning btn-round mr-2" id="btnResetPenilaian">
+                        <i class="fas fa-redo pr-2"></i>Reset Penilaian
+                    </button>
+                    <button type="button" class="btn btn-primary btn-round" id="btnHitungSekarang">
+                        <i class="fas fa-calculator pr-2"></i>Hitung Sekarang
+                    </button>
+                </div>
+            `);
+
+            $('#status-teks').html('<span class="badge badge-success px-3 py-2 small"><i class="fas fa-check mr-1"></i> Semua Nilai Tersimpan</span>');
+            $('#tablePenilaian').addClass('table-simpan');
+
+            // Render ulang table dalam mode simpan
+            let kasUtama = parseFloat($('#val_saldo_utama').val());
+            renderTable(kriteriaList, kegiatanList, kasUtama, nilaiTersimpan);
+
+            // Hide hasil ranking jika ada
+            $('#containerHasilRanking').hide();
+
+            bindButtonEvents();
+        }
+
+        function showModeInput() {
+            // Update tombol
+            $('#wrapper-tombol').html(`
+                <button type="button" class="btn btn-success btn-round" id="btnSimpanSemua">
+                    <i class="fas fa-save pr-2"></i>Simpan Penilaian
+                </button>
+            `);
+
+            $('#status-teks').html('<span class="badge badge-info px-3 py-2 small"><i class="fas fa-edit mr-1"></i> Masukkan Nilai (1-100)</span>');
+            $('#tablePenilaian').removeClass('table-simpan');
+
+            // Render ulang table dalam mode input
+            let kasUtama = parseFloat($('#val_saldo_utama').val());
+            renderTable(kriteriaList, kegiatanList, kasUtama, nilaiTersimpan);
+
+            // Hide hasil ranking
+            $('#containerHasilRanking').hide();
+
+            bindButtonEvents();
+        }
+
+        function bindButtonEvents() {
+            // Remove existing event listeners
+            $(document).off('click', '#btnSimpanSemua');
+            $(document).off('click', '#btnResetPenilaian');
+            $(document).off('click', '#btnHitungSekarang');
+            $(document).off('click', '#btnSimpanHasil');
+
+            // Bind new event listeners
+            $(document).on('click', '#btnSimpanSemua', simpanPenilaian);
+            $(document).on('click', '#btnResetPenilaian', resetPenilaian);
+            $(document).on('click', '#btnHitungSekarang', hitungRanking);
+            $(document).on('click', '#btnSimpanHasil', simpanHasil);
+        }
+
+        function clearValidationErrors() {
+            // Hapus semua status validasi
+            $('.input-nilai').removeClass('is-invalid');
+            $('.invalid-feedback').hide();
+            hasValidationError = false;
+        }
+
+        function showValidationErrors() {
+            let hasEmpty = false;
+            let hasInvalidRange = false;
+
+            $('.input-nilai').each(function() {
+                let $input = $(this);
+                let val = $input.val();
+                let $feedback = $input.closest('td').find('.invalid-feedback');
+
+                if (val === "" || val === null) {
+                    hasEmpty = true;
+                    $input.addClass('is-invalid');
+                    $feedback.html('<i class="fas fa-exclamation-circle mr-1"></i>Wajib diisi').show();
+                } else if (val < 1 || val > 100) {
+                    hasInvalidRange = true;
+                    $input.addClass('is-invalid');
+                    $feedback.html('<i class="fas fa-exclamation-circle mr-1"></i>Harus 1-100').show();
+                }
+            });
+
+            if (hasEmpty || hasInvalidRange) {
+                hasValidationError = true;
+
+                // Scroll ke input pertama yang error
+                let $firstInvalid = $('.input-nilai.is-invalid').first();
+                if ($firstInvalid.length) {
+                    $('html, body').animate({
+                        scrollTop: $firstInvalid.closest('tr').offset().top - 100
+                    }, 500);
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        function simpanPenilaian() {
+            // Clear previous validation errors
+            clearValidationErrors();
+
+            // Show validation errors
+            if (!showValidationErrors()) {
+                // Validation failed, don't proceed
+                return;
+            }
+
+            loadingAlert();
+            $.ajax({
+                url: '/saw/nilai/create',
+                method: 'POST',
+                data: $('#formPenilaian').serialize(),
+                success: function(res) {
+                    Swal.close();
+                    if(res.code === 200) {
+                        simpleAlert('Berhasil', 'success');
+
+                        // Update nilaiTersimpan dengan data terbaru
+                        if (res.data && Array.isArray(res.data)) {
+                            nilaiTersimpan = res.data;
+                        }
+                        reloadBrowsers();
+
+                        // Clear validation errors after successful save
+                        clearValidationErrors();
+
+                        // Check status setelah simpan
+                        checkStatusPenilaian();
+                    } else {
+                        simpleAlert('Gagal menyimpan penilaian', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.close();
+                    simpleAlert(xhr.responseJSON?.message || 'Gagal menyimpan penilaian', 'error');
+                }
+            });
+        }
+
+        function resetPenilaian() {
+            confirmAlert('Konfirmasi!', 'Apakah anda yakin?')
+            .then((result) => {
+                if (result.isConfirmed) {
+                    loadingAlert();
+
+                    // Panggil API untuk menghapus semua penilaian
+                    $.ajax({
+                        url: '/saw/nilai/clear-penilaian',
+                        method: 'DELETE',
+                        success: function(res) {
+                            Swal.close();
+                            if(res.code === 200) {
+                                // Kosongkan nilai tersimpan
+                                nilaiTersimpan = [];
+
+                                // Kembali ke mode input
+                                showModeInput();
+
+                                // Clear validation errors
+                                clearValidationErrors();
+
+                                simpleAlert('Berhasil', 'success');
+                                reloadBrowsers();
+                            } else {
+                                simpleAlert('Gagal mereset penilaian', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.close();
+                            simpleAlert(xhr.responseJSON?.message || 'Gagal mereset penilaian', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function hitungRanking() {
+            loadingAlert();
+            $.ajax({
+                url: '/saw/nilai/data',
+                method: 'GET',
+                success: function(response) {
+                    Swal.close();
+
+                    if(response.code === 200 && response.data && response.data.length > 0) {
+                        // Tampilkan hasil ranking
+                        let html = "";
+                        $.each(response.data, function(i, item) {
+                            let rank = i + 1;
+                            let badge = '';
+                            let icon = '';
+
+                            if (rank === 1) {
+                                badge = 'badge-success';
+                                icon = '<i class="fas fa-crown mr-1"></i>';
+                            } else if (rank === 2) {
+                                badge = 'badge-info';
+                                icon = '<i class="fas fa-medal mr-1"></i>';
+                            } else if (rank === 3) {
+                                badge = 'badge-warning';
+                                icon = '<i class="fas fa-award mr-1"></i>';
+                            } else {
+                                badge = 'badge-secondary';
+                                icon = '<i class="fas fa-hashtag mr-1"></i>';
+                            }
+
+                            html += `<tr class="text-center">
+                                <td style="vertical-align: middle;">
+                                    <span class="badge ${badge} px-2 py-1" style="font-size: 13px;">
+                                        ${icon} ${rank}
+                                    </span>
+                                </td>
+                                <td class="text-left" style="vertical-align: middle;">${item.nama_kegiatan}</td>
+                                <td style="vertical-align: middle;">
+                                    <span class="text-primary font-weight-bold" style="font-size: 16px;">${parseFloat(item.skor_total).toFixed(4)}</span>
+                                </td>
+                            </tr>`;
+                        });
+
+                        $('#bodyRanking').html(html);
+                        $('#containerHasilRanking').fadeIn();
+
+                        // Update tombol (disable reset dan hitung, tambahkan simpan hasil)
+                        $('#wrapper-tombol').html(`
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-warning btn-round mr-2 btn-disabled" disabled>
+                                    <i class="fas fa-redo pr-2"></i>Reset Penilaian
+                                </button>
+                                <button type="button" class="btn btn-primary btn-round mr-2 btn-disabled" disabled>
+                                    <i class="fas fa-calculator pr-2"></i>Hitung Sekarang
+                                </button>
+                            </div>
+                        `);
+
+                        simpleAlert('Berhasil', 'success');
+                        bindButtonEvents();
+
+                    } else {
+                        simpleAlert('Tidak ada data untuk dihitung', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.close();
+                    simpleAlert('Gagal menghitung ranking', 'error');
+                }
+            });
+        }
+
+        function simpanHasil() {
+            confirmAlert('Konfirmasi!', 'Apakah anda yakin?')
+            .then((result) => {
+                if (result.isConfirmed) {
+                    loadingAlert();
+                    $.ajax({
+                        url: '/saw/nilai/simpan-hasil',
+                        method: 'POST',
+                        success: function(res) {
+                            Swal.close();
+                            if(res.code === 200) {
+                                simpleAlert('Berhasil', 'success')
+                                .then(() => {
+                                    window.location.href = "/keputusan";
+                                });
+                            } else {
+                                simpleAlert('Gagal menyimpan hasil', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.close();
+                            simpleAlert(xhr.responseJSON?.message || 'Gagal menyimpan hasil', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Validasi real-time hanya untuk user feedback (tidak muncul saat input)
+        $(document).on('input', '.input-nilai', function() {
+            // Hanya hapus error jika user mengisi field yang sebelumnya error
+            let $input = $(this);
+            if ($input.hasClass('is-invalid')) {
+                $input.removeClass('is-invalid');
+                $input.closest('td').find('.invalid-feedback').hide();
             }
         });
 
-        // 4. Batch Store
-        $(document).on('click', '#btnSimpanSemua', function() {
-            let empty = false;
-            $('#formPenilaian input[required]').each(function() {
-                if ($(this).val() === "") {
-                    empty = true;
-                    $(this).parent().addClass('has-error');
-                } else {
-                    $(this).parent().removeClass('has-error');
-                }
-            });
-
-            if(empty) return Swal.fire('Peringatan', 'Harap lengkapi semua skor penilaian!', 'warning');
-
-            let formData = $('#formPenilaian').serialize();
-
-            loadingAlert('Menyimpan Data Matriks...');
-            $.ajax({
-                url: '/saw/penilaian/batch-store',
-                method: 'POST',
-                data: formData,
-                success: function(response) {
-                    Swal.close();
-                    if(response.code === 200) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'Nilai matriks penilaian telah tersimpan.',
-                            showConfirmButton: true
-                        }).then(() => { location.reload(); });
-                    }
-                },
-                error: function() {
-                    Swal.close();
-                    Swal.fire('Error', 'Gagal menyimpan penilaian.', 'error');
-                }
-            });
-        });
-
-        function loadingAlert(title) {
-            Swal.fire({ title: title, allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-        }
-
-        function toastAlert(msg) {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
-            Toast.fire({ icon: 'warning', title: msg });
-        }
-
+        // Initial load
         loadMatriks();
+        bindButtonEvents();
     });
 </script>
 
 <style>
-    .has-error .form-control { border-color: #f3545d !important; }
-    .input-group-text { font-size: 11px; font-weight: bold; }
-    .table-head-bg-primary th { border: none !important; }
+    .table-head-bg-primary th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        vertical-align: middle !important;
+        text-align: center !important;
+        font-size: 13px;
+        padding: 10px 5px !important;
+    }
+
+    .table-simpan {
+        border: 2px solid #28a745 !important;
+    }
+
+    .table-simpan td {
+        background-color: #f8fff9 !important;
+    }
+
+    .input-nilai {
+        border: 1px solid #ced4da !important;
+        border-radius: 4px !important;
+        transition: border-color 0.15s ease-in-out !important;
+        display: inline-block !important;
+    }
+
+    .input-nilai:focus {
+        border-color: #4e73df !important;
+        box-shadow: 0 0 0 0.1rem rgba(78, 115, 223, 0.25) !important;
+        outline: none !important;
+    }
+
+    .input-nilai.is-invalid {
+        border-color: #e74a3b !important;
+    }
+
+    .input-nilai.is-invalid:focus {
+        box-shadow: 0 0 0 0.1rem rgba(231, 74, 59, 0.25) !important;
+    }
+
+    .display-nilai {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        border-radius: 4px !important;
+        min-width: 40px !important;
+        display: inline-block !important;
+    }
+
+    #tablePenilaian {
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 13px;
+    }
+
+    #tablePenilaian td, #tablePenilaian th {
+        padding: 8px 5px !important;
+        border: 1px solid #e3e6f0 !important;
+    }
+
+    #tablePenilaian td:first-child {
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .badge-success {
+        background-color: #28a745 !important;
+    }
+
+    .badge-info {
+        background-color: #17a2b8 !important;
+    }
+
+    .badge-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+
+    .badge-secondary {
+        background-color: #6c757d !important;
+    }
+
+    .btn-round {
+        border-radius: 20px !important;
+        padding: 8px 20px !important;
+        font-size: 14px !important;
+    }
+
+    .btn-disabled {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    #status-teks {
+        font-size: 13px;
+        margin-top: 3px;
+    }
+
+    #containerHasilRanking {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Compact table styling */
+    .small {
+        font-size: 12px !important;
+    }
+
+    .table td .text-dark.small {
+        font-size: 11px !important;
+        line-height: 1.2;
+    }
+
+    /* Validation styles */
+    .invalid-feedback {
+        font-size: 10px !important;
+        padding: 2px 0 !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+        color: #e74a3b !important;
+    }
 </style>
 @endsection
