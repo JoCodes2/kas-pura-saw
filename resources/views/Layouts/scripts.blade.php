@@ -81,7 +81,7 @@
     moment.locale('id');
 </script>
 <script>
-    const urlLogout = 'v1/logout'
+    const urlLogout = 'saw/logout'
     $(document).ready(function() {
         $('#iconLogout').click(function(e) {
             Swal.fire({
@@ -102,7 +102,8 @@
                 if (result.isConfirmed) {
                     e.preventDefault();
                     $.ajax({
-                        url: `{{ url('${urlLogout}') }}`,
+                        url: "{{ url('saw/logout') }}",
+
                         method: 'POST',
                         dataType: 'json',
                         headers: {
