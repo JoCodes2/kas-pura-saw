@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             KriteriaSeeder::class,
             KegiatanSeeder::class,
+            AuthSeeder::class,
         ]);
     }
 }
