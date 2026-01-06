@@ -234,20 +234,32 @@
                         let inputHtml = "";
 
                         if (nama.includes('biaya')) {
+                            // Logika BIAYA
                             let biaya = Math.round(keg.estimasi_biaya || 0);
                             inputHtml = `
-                                <div class="text-center" style="vertical-align: middle;">
+                                <div class="text-center">
                                     <div class="text-dark small font-weight-bold">Rp ${new Intl.NumberFormat('id-ID').format(biaya)}</div>
-                                    <input type="hidden" class="biaya-input" value="${biaya}">
+                                    <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${biaya}">
                                 </div>`;
-                        } else if (nama.includes('dana') || nama.includes('ketersediaan')) {
+                        }
+                        else if (nama.includes('peserta')) {
+                            let jmlPeserta = keg.jumlah_peserta || 0;
+                            inputHtml = `
+                                <div class="text-center">
+                                    <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">
+                                        <i class="fas fa-users mr-1"></i> ${jmlPeserta} Orang
+                                    </span>
+                                    <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${jmlPeserta}">
+                                </div>`;
+                        }
+                        else if (nama.includes('dana') || nama.includes('ketersediaan')) {
+                            // Logika KETERSEDIAAN DANA
                             let biayaEstimasi = keg.estimasi_biaya || 1;
                             let skorDana = saldoUtama > 0 ? Math.min((saldoUtama / biayaEstimasi) * 100, 100) : 0;
-                            let badgeClass = kri.tipe == 'benefit' ? 'badge-success' : 'badge-warning';
                             inputHtml = `
-                                <div class="text-center" style="vertical-align: middle;">
-                                    <span class="badge ${badgeClass} px-2 py-1 small" style="font-size: 11px;">${skorDana.toFixed(0)}</span>
-                                    <input type="hidden" class="dana-input" value="${skorDana.toFixed(0)}">
+                                <div class="text-center">
+                                    <span class="badge badge-success px-2 py-1 small" style="font-size: 11px;">${skorDana.toFixed(0)}</span>
+                                    <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${skorDana.toFixed(0)}">
                                 </div>`;
                         } else {
                             // Kriteria kualitatif
