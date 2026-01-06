@@ -243,14 +243,33 @@
                                 </div>`;
                         }
                         else if (nama.includes('peserta')) {
-                            let jmlPeserta = keg.jumlah_peserta || 0;
-                            inputHtml = `
-                                <div class="text-center">
-                                    <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">
-                                        <i class="fas fa-users mr-1"></i> ${jmlPeserta} Orang
-                                    </span>
-                                    <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${jmlPeserta}">
-                                </div>`;
+                            // Mode Khusus Peserta (Input Jumlah Orang Manual)
+                            if (isSimpanMode) {
+                                // Tampilan setelah disimpan (Badge "Orang")
+                                inputHtml = `
+                                    <div class="text-center" style="vertical-align: middle;">
+                                        <span class="badge badge-secondary px-2 py-1 display-nilai small">${currentVal || 0} Orang</span>
+                                        <input type="hidden" name="nilai[${keg.id}][${kri.id}]" value="${currentVal || ''}">
+                                    </div>`;
+                            } else {
+                                // Mode Input Manual (Bukan persentase, tapi jumlah orang)
+                                inputHtml = `
+                                    <div class="text-center px-1">
+                                        <input type="number"
+                                            name="nilai[${keg.id}][${kri.id}]"
+                                            class="form-control input-nilai input-peserta text-center"
+                                            value="${currentVal}"
+                                            min="1"
+                                            placeholder="Jml"
+                                            style="height: 35px; font-size: 13px; width: 80px; margin: 0 auto; border-color: #6861ce !important;"
+                                            data-kegiatan="${keg.id}"
+                                            data-kriteria="${kri.id}">
+                                        <div class="text-muted mt-1" style="font-size: 10px;">Jumlah Orang</div>
+                                        <div class="invalid-feedback d-block text-center small mt-1" style="font-size: 10px; display: none;">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>Wajib diisi
+                                        </div>
+                                    </div>`;
+                            }
                         }
                         else if (nama.includes('dana') || nama.includes('ketersediaan')) {
                             // Logika KETERSEDIAAN DANA
@@ -418,14 +437,22 @@
                 let val = $input.val();
                 let $feedback = $input.closest('td').find('.invalid-feedback');
 
+                // Cek apakah ini input peserta atau kriteria kualitatif biasa
+                let isPeserta = $input.hasClass('input-peserta');
+
                 if (val === "" || val === null) {
                     hasEmpty = true;
                     $input.addClass('is-invalid');
-                    $feedback.html('<i class="fas fa-exclamation-circle mr-1"></i>Wajib diisi').show();
-                } else if (val < 1 || val > 100) {
+                    $feedback.html('Wajib diisi').show();
+                } else if (val < 1) {
                     hasInvalidRange = true;
                     $input.addClass('is-invalid');
-                    $feedback.html('<i class="fas fa-exclamation-circle mr-1"></i>Harus 1-100').show();
+                    $feedback.html('Min. 1').show();
+                } else if (!isPeserta && val > 100) {
+                    // Hanya kriteria NON-PESERTA yang dibatasi maksimal 100
+                    hasInvalidRange = true;
+                    $input.addClass('is-invalid');
+                    $feedback.html('Maks. 100').show();
                 }
             });
 
