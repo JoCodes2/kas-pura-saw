@@ -139,7 +139,7 @@
         <div class="shape"></div>
     </div>
 
-    <form id="formAuthentication" class="mb-3" method="POST" action="{{ url('saw/login') }}">
+    <form id="formAuthentication" class="mb-3" method="POST" >
         <h3>Login Here</h3>
 
         @csrf
@@ -171,7 +171,9 @@
 
         </div>
     </form>
-    {{-- <script src="{{ asset('assets/assets/vendor/libs/jquery/jquery.js') }}"></script> --}}
+    <!--   Core JS Files   -->
+    <script src="{{ asset('assets/js/core/jquery.3.2.1.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
@@ -205,39 +207,77 @@
             });
         }
 
-        $(document).ready(function() {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    $(document).ready(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // Inisialisasi jQuery Validate
+        $('#formAuthentication').validate({
+            rules: {
+                email: {
+                    required: true,
+                    email: true
+                },
+                password: {
+                    required: true,
+                    minlength: 6
                 }
-            });
-
-            $('#formAuthentication').on('submit', function(e) {
-                e.preventDefault();
-
+            },
+            messages: {
+                email: {
+                    required: "Email tidak boleh kosong",
+                    email: "Format email tidak valid"
+                },
+                password: {
+                    required: "Password tidak boleh kosong",
+                    minlength: "Password minimal 6 karakter"
+                }
+            },
+            errorElement: 'small',
+            errorPlacement: function(error, element) {
+                error.addClass('text-danger');
+                // Menempatkan error di elemen <small> yang sudah ada
+                if (element.attr("name") == "email") {
+                    error.appendTo("#email-error");
+                } else if (element.attr("name") == "password") {
+                    error.appendTo("#password-error");
+                } else {
+                    error.insertAfter(element);
+                }
+            },
+            submitHandler: function(form) {
+                // Jika validasi sukses, jalankan AJAX
                 loadingAlert();
 
                 $.ajax({
                     type: 'POST',
-                    url: "{{ url('saw/login') }}",
-                    data: new FormData(this),
+                    url: 'saw/login',
+                    data: new FormData(form),
                     processData: false,
                     contentType: false,
                     dataType: 'json',
-
                     success: function(response) {
                         Swal.close();
-                        successAlert('Login berhasil');
-                        window.location.href = '/master';
-                    },
+                            successAlert('Login berhasil');
 
+                            // Gunakan URL redirect dari JSON server jika ada
+                            setTimeout(function() {
+                                window.location.href = response.redirect || '/dashboard';
+                            }, 1000);
+                    },
                     error: function(xhr) {
                         Swal.close();
-                        errorAlert(xhr.responseJSON?.message ?? 'Email atau password salah');
+                        let errorMessage = xhr.responseJSON?.message ?? 'Email atau password salah';
+                        errorAlert(errorMessage);
                     }
                 });
-            });
+                return false; // Mencegah reload halaman
+            }
         });
+    });
     </script>
 
 

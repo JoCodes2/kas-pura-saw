@@ -20,15 +20,32 @@ class AuthRepositories implements AuthInterfaces
     public function login(AuthRequest $request)
     {
         try {
+            // 1. Coba melakukan autentikasi
             if (!Auth::attempt($request->only('email', 'password'))) {
-                return back()->withErrors(['email' => 'Email atau password salah']);
-            } else {
-                $user = $this->usermodel::where('email', $request->email)->first();
-                $user->createToken('token')->plainTextToken;
-                return redirect('/master');
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Email atau password salah'
+                ], 401); // 401 Unauthorized
             }
+
+            // 2. Jika berhasil, ambil data user
+            $user = Auth::user(); // Lebih ringkas daripada query ulang
+
+            // Buat token (opsional jika Anda menggunakan Sanctum untuk API)
+            $token = $user->createToken('token')->plainTextToken;
+
+            // 3. Kembalikan response JSON sukses dan URL tujuan
+            return response()->json([
+                'status'   => 'success',
+                'message'  => 'Login berhasil',
+                'token'    => $token
+            ], 200);
         } catch (\Throwable $th) {
-            return back()->withErrors(['email' => 'Terjadi kesalahan saat login']);
+            // 4. Tangani error sistem
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Terjadi kesalahan pada server: ' . $th->getMessage()
+            ], 500); // 500 Internal Server Error
         }
     }
 
