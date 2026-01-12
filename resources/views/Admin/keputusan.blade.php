@@ -246,36 +246,42 @@
             });
         }
 
-        // Render data ke tampilan
         function renderData(data) {
-            // Group data by tanggal_hitung
+            $('#dateGroups').empty();
+
+            // 1. Kelompokkan data berdasarkan 'created_at' karena memiliki Jam:Menit:Detik yang unik
             const groupedData = {};
             data.forEach(item => {
-                const tanggal = item.tanggal_hitung;
-                if (!groupedData[tanggal]) {
-                    groupedData[tanggal] = [];
+                // Kita gunakan created_at sebagai kunci agar sesi yang berbeda jamnya terpisah
+                const key = item.created_at;
+                if (!groupedData[key]) {
+                    groupedData[key] = [];
                 }
-                groupedData[tanggal].push(item);
+                groupedData[key].push(item);
             });
 
-            // Sort tanggal descending (terbaru dulu)
-            const sortedDates = Object.keys(groupedData).sort().reverse();
+            // 2. Urutkan Sesi dari yang terbaru (Descending)
+            const sortedKeys = Object.keys(groupedData).sort().reverse();
 
             let html = '';
 
-            sortedDates.forEach((tanggal, index) => {
-                const items = groupedData[tanggal];
-                const sortedItems = items.sort((a, b) => a.peringkat - b.peringkat);
+            sortedKeys.forEach((waktuSesi, index) => {
+                const items = groupedData[waktuSesi];
+
+                // 3. Urutkan item di dalam sesi berdasarkan skor preferensi tertinggi ke terendah
+                const sortedItems = items.sort((a, b) => b.nilai_preferensi - a.nilai_preferensi);
 
                 html += `
-                    <div class="card card-round shadow-sm mb-4 ${index === 0 ? 'border-primary' : ''}">
-                        <div class="card-header bg-light">
+                    <div class="card card-round shadow-sm mb-5 ${index === 0 ? 'border-primary' : ''}">
+                        <div class="card-header ${index === 0 ? 'bg-primary text-white' : 'bg-light'}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-calendar-alt text-primary mr-2"></i>
-                                    Hasil Perankingan ${formatTanggal(tanggal)}
+                                    <i class="fas fa-history mr-2"></i>
+                                    Sesi Perhitungan: ${formatTanggalMakassar(waktuSesi)}
                                 </h5>
-                                <span class="badge badge-primary">${items.length} Kegiatan</span>
+                                <span class="badge ${index === 0 ? 'badge-light text-primary' : 'badge-primary'}">
+                                    ${items.length} Alternatif
+                                </span>
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -283,91 +289,76 @@
                                 <table class="table table-hover mb-0">
                                     <thead>
                                         <tr class="text-center">
-                                            <th width="80" class="text-center">Peringkat</th>
+                                            <th width="80">Rank</th>
                                             <th class="text-left">Nama Kegiatan</th>
-                                            <th width="150" class="text-center">Pengaju</th>
-                                            <th width="150" class="text-center">Estimasi Biaya</th>
-                                            <th width="150" class="text-center">Skor Preferensi</th>
-                                            <th width="150" class="text-center">Status</th>
-                                            <th width="200" class="text-center">Aksi</th>
+                                            <th width="150">Estimasi Biaya</th>
+                                            <th width="150">Skor Preferensi</th>
+                                            <th width="120">Status</th>
+                                            <th width="180">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>`;
 
-                sortedItems.forEach(item => {
+                sortedItems.forEach((item, i) => {
                     const kegiatan = item.kegiatan;
                     const isFinal = isStatusFinal(kegiatan.status_kegiatan);
-                    const buttonDisabled = isFinal ? 'disabled' : '';
+                    // Gunakan index looping + 1 untuk peringkat jika ingin peringkat visual yang rapi
+                    const rank = i + 1;
 
                     html += `
-                                        <tr>
-                                            <td class="text-center" style="vertical-align: middle;">
-                                                ${renderBadgePeringkat(item.peringkat)}
-                                            </td>
-                                            <td style="vertical-align: middle;">
-                                                <div class="font-weight-bold">${kegiatan.nama_kegiatan}</div>
-                                                <small class="text-muted">${formatTanggal(kegiatan.tanggal_kegiatan)}</small>
-                                            </td>
-                                            <td style="vertical-align: middle;" class="text-center">
-                                                <div>${kegiatan.nama_pengaju}</div>
-                                                <small class="text-muted">${kegiatan.no_hp}</small>
-                                            </td>
-                                            <td class="text-center" style="vertical-align: middle;">
-                                                <span class="font-weight-bold text-primary">${formatRupiah(parseFloat(kegiatan.estimasi_biaya))}</span>
-                                            </td>
-                                            <td class="text-center" style="vertical-align: middle;">
-                                                <span class="font-weight-bold text-success">${parseFloat(item.nilai_preferensi).toFixed(4)}</span>
-                                            </td>
-                                            <td class="text-center" style="vertical-align: middle;">
-                                                ${renderBadgeStatus(kegiatan.status_kegiatan)}
-                                            </td>
-                                            <td class="text-center" style="vertical-align: middle;">
-                                                <div class="btn-group btn-group-sm" role="group">`;
+                        <tr>
+                            <td class="text-center">${renderBadgePeringkat(rank)}</td>
+                            <td>
+                                <div class="font-weight-bold">${kegiatan.nama_kegiatan}</div>
+                                <small class="text-muted">Pengaju: ${kegiatan.nama_pengaju}</small>
+                            </td>
+                            <td class="text-center text-primary font-weight-bold">
+                                ${formatRupiah(parseFloat(kegiatan.estimasi_biaya))}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-count text-success border border-success">
+                                    ${parseFloat(item.nilai_preferensi).toFixed(4)}
+                                </span>
+                            </td>
+                            <td class="text-center">${renderBadgeStatus(kegiatan.status_kegiatan)}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    ${isFinal ?
+                                        `<span class="badge badge-secondary"><i class="fas fa-lock"></i> Terkunci</span>` :
 
-                    // Jika status sudah final, tampilkan info saja
-                    if (isFinal) {
-                        html += `
-                                                    <span class="btn btn-outline-secondary" style="cursor: default;">
-                                                        <i class="fas fa-lock mr-1"></i> Status Final
-                                                    </span>`;
-                    } else {
-                        // Jika masih bisa diubah, tampilkan tombol aksi
-                        html += `
-                                                    <button type="button" class="btn btn-success btn-action" data-id="${kegiatan.id}" data-action="diadakan" data-nama="${kegiatan.nama_kegiatan}" ${buttonDisabled}>
-                                                        <i class="fas fa-check"></i> Diadakan
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger btn-action" data-id="${kegiatan.id}" data-action="ditolak" data-nama="${kegiatan.nama_kegiatan}" ${buttonDisabled}>
-                                                        <i class="fas fa-times"></i> Ditolak
-                                                    </button>
-                                                    <button type="button" class="btn btn-warning btn-action" data-id="${kegiatan.id}" data-action="ditunda" data-nama="${kegiatan.nama_kegiatan}" ${buttonDisabled}>
-                                                        <i class="fas fa-clock"></i> Ditunda
-                                                    </button>`;
-                    }
-
-                    html += `
-                                                </div>
-                                            </td>
-                                        </tr>`;
+                                        `<button type="button" class="btn btn-success btn-action" data-id="${kegiatan.id}" data-action="diadakan" data-nama="${kegiatan.nama_kegiatan}">
+                                            <i class="fas fa-check"></i> Diadakan
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-action" data-id="${kegiatan.id}" data-action="ditolak" data-nama="${kegiatan.nama_kegiatan}">
+                                            <i class="fas fa-times"></i> Ditolak
+                                        </button>
+                                        <button type="button" class="btn btn-warning btn-action" data-id="${kegiatan . id}" data-action="ditunda" data-nama="${kegiatan . nama_kegiatan}">
+                                            <i class="fas fa-clock"></i> Ditunda
+                                        </button>`
+                                    }
+                                </div>
+                            </td>
+                        </tr>`;
                 });
-
-                html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-light">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Hasil perankingan ini dihitung pada ${formatTanggal(tanggal)}
-                            </small>
-                        </div>
-                    </div>`;
+                html += `</tbody></table></div></div></div>`;
             });
 
             $('#dateGroups').html(html);
-
-            // Bind event untuk tombol aksi
             bindActionEvents();
+        }
+
+        // Fungsi Helper untuk format waktu Makassar
+        function formatTanggalMakassar(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) + ' WITA';
         }
 
         // Bind event untuk tombol aksi

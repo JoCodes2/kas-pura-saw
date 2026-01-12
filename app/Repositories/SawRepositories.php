@@ -8,6 +8,7 @@ use App\Models\KegiatanModel;
 use App\Models\KriteriaModel;
 use App\Models\PenilaianModel;
 use App\Traits\HttpResponseTraits;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -128,21 +129,24 @@ class SawRepositories implements SawInterfaces
         return DB::transaction(function () use ($rankingData) {
             $idsKegiatan = collect($rankingData)->pluck('id_kegiatan')->toArray();
 
+            // Menggunakan Carbon dengan timezone Makassar
+            $waktuSekarang = Carbon::now('Asia/Makassar')->format('Y-m-d H:i:s');
+
             foreach ($rankingData as $item) {
                 $this->hasilSaw::create([
                     'id' => (string) Str::uuid(),
                     'id_kegiatan' => $item['id_kegiatan'],
                     'nilai_preferensi' => $item['skor_total'],
                     'peringkat' => $item['ranking'],
-                    'tanggal_hitung' => now(),
+                    'tanggal_hitung' => $waktuSekarang, // Pastikan kolom ini bertipe datetime/timestamp
                 ]);
             }
 
             $this->nilaiModel::whereIn('id_kegiatan', $idsKegiatan)->delete();
-
             return true;
         });
     }
+
     public function clearPenilaian()
     {
         DB::beginTransaction();
