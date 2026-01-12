@@ -261,6 +261,7 @@
                         $('#id').val(response.data.id);
                         $('#nama_kas').val(response.data.nama_kas);
                         $('#saldo').val(response.data.saldo);
+                        $('.text-danger').text('');
 
                         if(currentIsUtama == 1) {
                             $('#is_utama').prop('checked', true).parent().show();
