@@ -153,15 +153,14 @@ class KegiatanRepositories implements KegiatanInterfaces
         try {
             $data = $this->KegiatanModel::findOrFail($id);
             $allowedStatuses = ['menunggu', 'diproses', 'ditolak', 'ditunda', 'diadakan'];
+
             if (!in_array($status, $allowedStatuses)) {
                 return $this->error('Status tidak valid', 400);
             }
 
             $oldStatus = $data->status_kegiatan;
 
-            $data->status_kegiatan = $status;
-            $data->save();
-
+            // Logika Khusus jika status diubah menjadi 'diadakan'
             if ($status === 'diadakan' && $oldStatus !== 'diadakan') {
                 $kasUtama = DB::table('master_kas')->where('is_utama', 1)->first();
 
@@ -169,19 +168,34 @@ class KegiatanRepositories implements KegiatanInterfaces
                     throw new \Exception("Kas Utama tidak ditemukan. Harap atur master kas terlebih dahulu.");
                 }
 
+                // --- PERBAIKAN: Cek kecukupan saldo ---
+                $estimasiBiaya = (float) $data->estimasi_biaya;
+                $saldoSekarang = (float) $kasUtama->saldo;
+
+                if ($saldoSekarang < $estimasiBiaya) {
+                    throw new \Exception("Saldo Kas Utama tidak cukup! Saldo saat ini: Rp " . number_format($saldoSekarang, 0, ',', '.') . ", Biaya kegiatan: Rp " . number_format($estimasiBiaya, 0, ',', '.'));
+                }
+                // --------------------------------------
+
+                // Catat transaksi pengeluaran
                 DB::table('kas_keluar')->insert([
-                    'id' => Str::uuid(),
+                    'id' => (string) Str::uuid(),
                     'id_kas' => $kasUtama->id,
                     'id_kegiatan' => $data->id,
-                    'tanggal' => now(),
-                    'jumlah' => $data->estimasi_biaya,
+                    'tanggal' => \Carbon\Carbon::now('Asia/Makassar'),
+                    'jumlah' => $estimasiBiaya,
                     'keterangan' => "Pengeluaran otomatis untuk kegiatan: " . $data->nama_kegiatan,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                DB::table('master_kas')->where('id', $kasUtama->id)->decrement('saldo', $data->estimasi_biaya);
+                // Potong saldo master
+                DB::table('master_kas')->where('id', $kasUtama->id)->decrement('saldo', $estimasiBiaya);
             }
+
+            // Update status kegiatan hanya jika pengecekan saldo di atas lolos
+            $data->status_kegiatan = $status;
+            $data->save();
 
             DB::commit();
             return $this->success($data);
