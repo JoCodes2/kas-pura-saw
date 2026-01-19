@@ -590,7 +590,10 @@
                                 </td>
                                 <td class="text-left" style="vertical-align: middle;">${item.nama_kegiatan}</td>
                                 <td style="vertical-align: middle;">
-                                    <span class="text-primary font-weight-bold" style="font-size: 16px;">${parseFloat(item.skor_total).toFixed(4)}</span>
+                                    <span class="text-primary font-weight-bold" style="font-size: 16px;">  ${(Math.round(parseFloat(item.nilai_preferensi) * 100) / 100).toLocaleString('id-ID', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}</span>
                                 </td>
                             </tr>`;
                         });
