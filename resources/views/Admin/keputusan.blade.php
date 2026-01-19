@@ -317,7 +317,10 @@
                             </td>
                             <td class="text-center">
                                 <span class="badge badge-count text-success border border-success">
-                                   ${parseFloat(item.nilai_preferensi).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    ${(Math.round(parseFloat(item.nilai_preferensi) * 100) / 100).toLocaleString('id-ID', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}
                                 </span>
                             </td>
                             <td class="text-center">${renderBadgeStatus(kegiatan.status_kegiatan)}</td>
